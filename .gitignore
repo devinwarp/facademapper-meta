@@ -7,3 +7,4 @@ out/
 docs/plans/
 # client assets (photos, UV maps): never commit
 data/
+.claude/

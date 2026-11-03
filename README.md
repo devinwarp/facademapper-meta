@@ -9,11 +9,43 @@ Reads a building's architecture from one photo and makes show content that fits 
 
 ## Built during the event
 
-Everything in this repository was written 26 Oct – 4 Nov 2026 for the Meta AI Developer Hackathon (Startup track).
-Commit history is the evidence; see [CHANGELOG.md](CHANGELOG.md).
+Everything in this repository was written 26 Oct – 4 Nov 2026 for the Meta AI Developer Hackathon (Startup track). Commit history is the evidence; see [CHANGELOG.md](CHANGELOG.md).
 
-> A pre-existing Facade Mapper app exists separately (private) and is **not** submitted.
-> This repo runs as a standalone service with its own interface; the existing app calls it.
+- **F1 Element map**: facade elements (fins, glass bands, setbacks, crown) as masks from one photo (`app/mapper.py`, `POST /map`)
+- **F2 Show plan**: timed plan whose steps reference real element ids, plus concept suggestions (`app/planner.py`, `POST /plan`)
+- **F3 Visuals**: per-concept light-art textures and 360-degree synthesizer (`app/visuals.py`)
+- **F4 Motion**: element-driven motion and fixture rendering (`app/motion.py`, `app/fixtures.py`)
+- **F5 Readability check**: fixture-pitch audit and vision review, with auto-fix (`app/checker.py`)
+- **Studio UI**: browser interface and session API (`GET /`, `/api/*`)
+- **Four-side stitcher**: combines North, East, South, West photos into one 360-degree facade map (`app/stitcher.py`)
+
+## Existing baseline (not submitted)
+
+A private Facade Mapper app existed before the event and is not part of this repository:
+
+- zone drawing
+- video generation
+- export
+- the `facade_videogen` facet/homography contract (per-face canvas-rect to photo-quad mapping)
+
+## How the two connect
+
+This repo is a standalone service. The existing app calls it over HTTP (`POST /map`, `POST /plan`, and `/api/*`). No baseline code is included here.
+
+## Which model runs what
+
+| Feature | Model | Notes |
+|---|---|---|
+| F1 Element map | Muse Spark 1.3 + SAM 3.1 | Spark proposes element boxes; SAM 3.1 outlines them |
+| F2 Plan, concepts | Muse Spark 1.3 | JSON plan; invalid plans re-asked once |
+| F3 Visuals | Muse Image 1.0 | Falls back to a procedural texture when the image call fails; the response reports which source was used |
+| F4 Motion | None (our own code) | NumPy/ffmpeg rendering along element masks |
+| F5 Readability check | Muse Spark 1.3 | Vision review plus a deterministic pitch audit |
+| Stitcher | SAM 3.1 + Muse Spark 1.3 | Segments each side |
+
+## Results
+
+See [METRICS.md](METRICS.md).
 
 ## Run
 
@@ -25,6 +57,8 @@ uv run python scripts/smoke.py [facade.jpg]
 uv run pytest
 ```
 
+Endpoints (`app/main.py`): `GET /health`, `GET /`, `POST /map`, `POST /plan`, `GET /api/presets`, `POST /api/analyze`, `POST /api/analyze-stitch`, `POST /api/concepts`, `POST /api/generate`, `POST /api/fix-readability`, `GET /assets/{session_id}/{filename}`.
+
 ### Studio Workflow (`http://127.0.0.1:8000`)
 1. **Upload 1 viewpoint photo OR Stitch All 4 Sides (North · East · South · West)**:
    - **Single Photo (1–2 Sides)**: upload one photo (plus an optional 2D UV fixture survey mask); `muse-spark-1.3` + `sam-3.1` map the architectural elements and trace real mullions, helical fins, crown, setbacks, and floor slabs to suggest **3+ realistic fixture rig options**.
@@ -32,6 +66,8 @@ uv run pytest
 2. **Choose a fixture layout** — `muse-spark-1.3` proposes **3 tailored lighting concepts** grounded in the mapped zones and fixture count, with instant per-fixture concept mockups.
 3. **Generate 360° show & export media-server deliverables** — authors a seamless 360° wrap-around show across all building elevations (`muse-image-1.0` silk plates + helical vortex, comet stream, diamond lattice, and champagne shimmer shaders), renders discrete physical LED bars (zero glass wash), runs the `muse-spark-1.3` readability check + 1-click fix, and exports both the on-building video and the pixel-registered whole-facade media-server deliverable + UV mask.
 
-Hosting: Render web service (long-running Python process; no function timeouts for model calls).
+## Deploy
+
+`Dockerfile` (Python 3.12 + ffmpeg, serves on `$PORT`) and `render.yaml` (Render web service, health check `/health`). Set `MODEL_API_KEY` in the Render dashboard.
 
 License: Apache-2.0
