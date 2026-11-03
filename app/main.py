@@ -27,7 +27,7 @@ from app.fixtures import (
     propose_fixture_rigs,
     render_rig_blueprint,
 )
-from app.mapper import Element, map_facade
+from app.mapper import Element, element_at_point, map_facade
 from app.motion import (
     Plan,
     Step,
@@ -71,6 +71,7 @@ class SessionState:
     last_texture_source: str = "procedural-shader"
     last_wrap_fraction: float | None = None
     is_stitched_360: bool = False
+    survey: Any = None
 
 
 SESSIONS: dict[str, SessionState] = {}
@@ -360,6 +361,7 @@ async def api_analyze(
         rig_options=rig_dict,
         last_rig_id=opts[0].id,
         last_active_eids=[e.id for e in els],
+        survey=surv,
     )
 
     return {
@@ -461,6 +463,55 @@ async def api_analyze_stitch(
             for e in stitched.elements
         ],
         "rig_options": rig_cards,
+    }
+
+
+class ElementEdit(BaseModel):
+    action: str  # 'add' | 'remove'
+    element_id: int | None = None
+    x: int | None = None  # photo pixels
+    y: int | None = None
+    label: str = "element"
+
+
+@app.post("/api/sessions/{sid}/elements")
+async def api_edit_elements(sid: str, req: ElementEdit):
+    """F1 click-to-edit: add (SAM point prompt) or remove an element; rigs/overlay are rebuilt from the edited map."""
+    st = SESSIONS.get(sid)
+    if st is None:
+        raise HTTPException(404, "Session expired or not found; please re-upload the photo.")
+    if req.action == "remove":
+        if len(st.els) <= 1:
+            raise HTTPException(422, "Keep at least one element.")
+        st.els = [e for e in st.els if e.id != req.element_id]
+    elif req.action == "add" and req.x is not None and req.y is not None:
+        try:
+            new = await element_at_point(st.img, req.x, req.y, req.label.strip() or "element", max((e.id for e in st.els), default=0) + 1)
+        except ValueError as ex:
+            raise HTTPException(422, str(ex))
+        st.els.append(new)
+    else:
+        raise HTTPException(400, "Use {action:'remove', element_id} or {action:'add', x, y, label}.")
+    # ponytail: full rig re-propose per edit (CPU, seconds); incremental membership update if it feels slow
+    opts, st.night_base, st.building_mask = propose_fixture_rigs(st.img, st.els, survey=st.survey)
+    st.rig_options = {o.id: o for o in opts}
+    st.last_rig_id = opts[0].id
+    st.last_active_eids = [e.id for e in st.els]
+    W, H = opts[0].render_size
+    v = uuid.uuid4().hex[:6]
+    _render_zone_overlay(st.img, st.els, (W, H)).save(st.folder / f"zones_{v}.jpg", quality=92)
+    cards = []
+    for o in opts:
+        fname = f"rig_{o.id}_{v}.jpg"
+        render_rig_blueprint(st.night_base, o, st.els).save(st.folder / fname, quality=92)
+        d = o.summary_dict()
+        d["preview_url"] = f"/assets/{sid}/{fname}"
+        d["element_counts"] = {str(eid): int(len(idx)) for eid, idx in o.elem_membership.items()}
+        cards.append(d)
+    return {
+        "zones_url": f"/assets/{sid}/zones_{v}.jpg",
+        "elements": [{"id": e.id, "label": e.label, "kind": e.kind, "box": e.box} for e in st.els],
+        "rig_options": cards,
     }
 
 

@@ -2,7 +2,7 @@
 import asyncio, base64, io, json, os
 from dataclasses import dataclass
 
-from meta_sam_parser import (FramePrompt, PromptBox, PromptObject, PromptPoint, build_object_prompt,
+from meta_sam_parser import (FramePrompt, PromptBox, PromptPoint, PromptObject, PromptPoint, build_object_prompt,
                              decode_mask_to_raster, image_segmentation_format, parse_responses_stream)
 from openai import AsyncOpenAI
 from PIL import Image, ImageChops
@@ -109,6 +109,7 @@ class Element:
     kind: str
     box: tuple[int, int, int, int]  # pixels
     mask: Image.Image | None = None  # L-mode, full image size, 255 = element
+    point: tuple[int, int] | None = None  # click prompt (pixels); used instead of box when set
     void_mask: Image.Image | None = None  # L-mode, full image size, 255 = SAM 3.1 negative-space cutout
     void_audited: bool = False  # True once high-res ROI SAM 3.1 void audit has evaluated the facade
 
@@ -160,7 +161,8 @@ async def outline_with_hero(img: Image.Image, els: list[Element], all_els: list[
     """SAM 3.1 box prompts -> one full-size mask per solid element PLUS one overall hero-facade mask (id=999)."""
     import numpy as np
     w, h = img.size
-    objs = [PromptObject(id=e.id, prompts=[FramePrompt(box=PromptBox(*e.box))]) for e in els]
+    objs = [PromptObject(id=e.id, prompts=[FramePrompt(points=[PromptPoint(*e.point)]) if e.point
+                                           else FramePrompt(box=PromptBox(*e.box))]) for e in els]
     if all_els:
         ux1 = min(e.box[0] for e in all_els)
         uy1 = min(e.box[1] for e in all_els)
@@ -197,6 +199,16 @@ async def outline_with_hero(img: Image.Image, els: list[Element], all_els: list[
         full.paste(tile, (int(rec.bounds.left), int(rec.bounds.top)))
         el.mask = full
     return els, hero
+
+
+async def element_at_point(img: Image.Image, x: int, y: int, label: str, eid: int) -> Element:
+    """F1 click-to-edit: SAM 3.1 point prompt at (x, y) -> one new element (box = mask bbox)."""
+    el = (await outline(img, [Element(eid, label, "other", (x, y, x + 1, y + 1), point=(x, y))]))[0]
+    bbox = el.mask.getbbox() if el.mask is not None else None
+    if bbox is None:
+        raise ValueError("SAM found nothing at that point")
+    el.box = bbox
+    return el
 
 
 async def concept_masks(img: Image.Image, text: str) -> list["np.ndarray"]:

@@ -1244,6 +1244,37 @@
       }
     }
 
+    async function editElements(body) {
+      setBusy(true, 'Updating element map and fixture rigs…');
+      try {
+        const res = await fetch(`/api/sessions/${state.sessionId}/elements`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!res.ok) throw new Error((await res.json()).detail || 'Edit failed');
+        Object.assign(state.analysis, await res.json());
+        state.activeElementIds = state.analysis.elements.map((e) => e.id);
+        state.selectedRigId = (state.analysis.rig_options.find((o) => o.recommended) || state.analysis.rig_options[0]).id;
+        renderRigStep();
+        showImage(state.analysis.zones_url, 'Element map updated.');
+      } catch (err) { $('stage-caption').textContent = 'Error: ' + err.message; } finally { setBusy(false); }
+    }
+    // click the element-map overlay -> inline label box -> SAM point prompt
+    $('stage-img').addEventListener('click', (ev) => {
+      const a = state.analysis;
+      if (!a || !a.zones_url || !$('stage-img').src.includes('zones') || state.zoomed) return;
+      const r = ev.target.getBoundingClientRect();
+      const x = Math.round((ev.clientX - r.left) / r.width * a.photo_size[0]);
+      const y = Math.round((ev.clientY - r.top) / r.height * a.photo_size[1]);
+      let box = $('add-el-box');
+      if (!box) {
+        box = document.createElement('form');
+        box.id = 'add-el-box';
+        box.innerHTML = '<input name="l" placeholder="Label new element" required> <button>Add</button>';
+        $('stage-caption').after(box);
+      }
+      box.onsubmit = (e) => { e.preventDefault(); const l = box.l.value; box.remove(); editElements({ action: 'add', x, y, label: l }); };
+      box.l.focus();
+    });
+
     function renderRigStep() {
       const data = state.analysis;
       $('rig-results').classList.remove('hidden');
@@ -1285,7 +1316,8 @@
         const lbl = document.createElement('label');
         lbl.className = 'zone-chip';
         const checked = state.activeElementIds.includes(el.id) ? 'checked' : '';
-        lbl.innerHTML = `<input type="checkbox" value="${el.id}" ${checked}> #${el.id} ${el.label} (${cnt})`;
+        lbl.innerHTML = `<input type="checkbox" value="${el.id}" ${checked}> #${el.id} ${el.label} (${cnt}) <button type="button" class="el-x" title="Remove element">x</button>`;
+        lbl.querySelector('.el-x').addEventListener('click', (ev) => { ev.preventDefault(); editElements({ action: 'remove', element_id: el.id }); });
         lbl.querySelector('input').addEventListener('change', (ev) => {
           const id = Number(ev.target.value);
           if (ev.target.checked) {
