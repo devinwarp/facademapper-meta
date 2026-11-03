@@ -130,9 +130,13 @@ def _load_dotenv() -> None:
                     os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
 
 
+def _missing_key():
+    raise RuntimeError("MODEL_API_KEY is not set (copy .env.example to .env)")
+
+
 def _client() -> AsyncOpenAI:
     _load_dotenv()
-    return AsyncOpenAI(base_url=BASE, api_key=os.environ["MODEL_API_KEY"])
+    return AsyncOpenAI(base_url=BASE, api_key=os.environ.get("MODEL_API_KEY") or _missing_key())
 
 
 async def propose(img: Image.Image, n: int = 12) -> list[Element]:

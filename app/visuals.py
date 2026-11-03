@@ -172,8 +172,8 @@ async def generate_concept_texture(visual_prompt: str, colors: list[str], use_mo
                     blended = np.clip(0.64 * lut_mapped + 0.18 * arr + 0.18 * proc, 0.0, 255.0)
                     seamless = make_horizontally_seamless(blended, margin=64)
                     return seamless.astype(np.float32), "muse-image-1.0"
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[F3] muse-image failed, using procedural-shader: {e!r}")
     return procedural_texture(colors, size=512), "procedural-shader"
 
 

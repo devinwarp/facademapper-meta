@@ -77,6 +77,13 @@ class SessionState:
 SESSIONS: dict[str, SessionState] = {}
 
 
+async def _read_image(f) -> Image.Image:
+    try:
+        return ImageOps.exif_transpose(Image.open(io.BytesIO(await f.read()))).convert("RGB")
+    except Exception:
+        raise HTTPException(400, "Not a readable image file")
+
+
 @app.get("/health")
 def health():
     return {"ok": True}
@@ -109,14 +116,14 @@ def _elements_json(img: Image.Image, els: list[Element]) -> dict[str, Any]:
 @app.post("/map")
 async def map_endpoint(photo: UploadFile = File(...)):
     """F1: one photo in -> labelled element masks out (PNG per element, white = element)."""
-    img = ImageOps.exif_transpose(Image.open(io.BytesIO(await photo.read()))).convert("RGB")
+    img = await _read_image(photo)
     return _elements_json(img, await map_facade(img))
 
 
 @app.post("/plan")
 async def plan_endpoint(photo: UploadFile = File(...), brief: str = Form(...), duration_s: float = Form(30)):
     """F2: photo + brief -> element map + a timed plan grounded in those elements."""
-    img = ImageOps.exif_transpose(Image.open(io.BytesIO(await photo.read()))).convert("RGB")
+    img = await _read_image(photo)
     els = await map_facade(img)
     plan = await make_plan(img, els, brief, duration_s)
     return {**_elements_json(img, els), "plan": plan.model_dump()}
@@ -312,7 +319,7 @@ async def api_analyze(
         if preset == "wasl_with_survey" and (DATA_DIR / "wasl_uv_dyn.png").exists():
             surv = load_survey(str(DATA_DIR / "wasl_uv_dyn.png"), cache=str(DATA_DIR / "wasl_uv_dyn.png.npz"))
     elif photo is not None:
-        img = ImageOps.exif_transpose(Image.open(io.BytesIO(await photo.read()))).convert("RGB")
+        img = await _read_image(photo)
         if survey_mask is not None:
             sid_tmp = OUT_DIR / f"tmp_{uuid.uuid4().hex[:8]}.png"
             sid_tmp.write_bytes(await survey_mask.read())
@@ -403,7 +410,7 @@ async def api_analyze_stitch(
         side_imgs = []
         for u in uploads:
             assert u is not None
-            side_imgs.append(Image.open(io.BytesIO(await u.read())).convert("RGB"))
+            side_imgs.append(await _read_image(u))
 
     sid = uuid.uuid4().hex[:12]
     folder = OUT_DIR / sid
