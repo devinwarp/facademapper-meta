@@ -20,13 +20,31 @@ class Survey:
     canvas: tuple[int, int]  # (width, height)
 
 
+def read_uv_mask_bool(im: Image.Image) -> np.ndarray:
+    """Decode any standard media-server UV mask format into a boolean fixture mask:
+    1. White/coloured fixture pixels on black (`max(R,G,B) > 127`)
+    2. Transparent stencil cutouts punched in a black mask (`alpha < 128` when >70% is opaque black)
+    3. Opaque fixture pixels on a transparent sheet (`alpha > 127`).
+    """
+    if im.mode in ("RGBA", "LA") or "transparency" in im.info:
+        rgba = np.asarray(im.convert("RGBA"))
+        rgb_hi = rgba[:, :, :3].max(axis=2) > 127
+        if rgb_hi.mean() > 0.0004:
+            return rgb_hi
+        alpha = rgba[:, :, 3]
+        if (alpha < 128).mean() > 0.0004 and (alpha > 200).mean() > 0.70:
+            return alpha < 128
+        return alpha > 127
+    return np.asarray(im.convert("L")) > 127
+
+
 def load_survey(mask_path: str, cache: str | None = None) -> Survey:
-    """Connected white blobs in the mask = fixtures. Cached as .npz (parsing the 128 MP image is slow)."""
+    """Connected fixture blobs in the UV mask = fixtures. Cached as .npz (parsing 128 MP masks is slow)."""
     if cache and os.path.exists(cache):
         z = np.load(cache)
         return Survey(z["cx"], z["cy"], float(z["w"]), float(z["h"]), tuple(z["canvas"]))
     from scipy import ndimage as ndi
-    a = np.asarray(Image.open(mask_path).convert("L")) > 127
+    a = read_uv_mask_bool(Image.open(mask_path))
     lab, n = ndi.label(a)
     sl = ndi.find_objects(lab)
     cy = np.array([(s[0].start + s[0].stop) / 2 for s in sl]); cx = np.array([(s[1].start + s[1].stop) / 2 for s in sl])
@@ -37,12 +55,13 @@ def load_survey(mask_path: str, cache: str | None = None) -> Survey:
     return sv
 
 
-def elevations(sv: Survey, gap: float = 150, min_height: float = 0.4) -> list[tuple[float, float, float, float]]:
+def elevations(sv: Survey, gap: float | None = None, min_height: float = 0.4) -> list[tuple[float, float, float, float]]:
     """Split fixtures into elevations at x-gaps wider than `gap`; keep the tall ones (towers, not podium bands).
     Returns canvas rects (x0, y0, x1, y1), left to right."""
+    use_gap = float(gap) if gap is not None else max(16.0, 0.013 * float(sv.canvas[0]))
     order = np.argsort(sv.cx)
     x = sv.cx[order]
-    cut = np.where(np.diff(x) > gap)[0]
+    cut = np.where(np.diff(x) > use_gap)[0]
     groups = np.split(order, cut + 1)
     out = []
     for g in groups:
