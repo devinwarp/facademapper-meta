@@ -27,3 +27,17 @@ Event work only (26 Oct – 4 Nov 2026). One entry per feature, dated.
 - **F5 readability check & 1-click fix (`app/checker.py`)**: combines physical fixture-pitch column×row audit with `muse-spark-1.3` vision review to flag unreadable text or sparse zones before test night, plus deterministic auto-fix & re-render.
 - **Standalone Facade Mapper Studio (`app/main.py`, `app/static/index.html`)**: full interactive web UI (`GET /`) and session API (`/api/analyze`, `/api/analyze-stitch`, `/api/concepts`, `/api/generate`, `/api/fix-readability`) exporting on-building camera preview MP4, 360° 4-elevation viewport map, edge-to-edge 360° media-server deliverable MP4, and 2D UV fixture mask PNG.
 - **4-Side Architectural Facade Map Stitcher (`app/stitcher.py`, `POST /api/analyze-stitch`)**: lets users upload all 4 building elevations (North · East · South · West), segments them concurrently via SAM 3.1 + Muse Spark, aligns crown-to-base height across varied camera distances, harmonizes twilight exposure across seams, and maps all 4 sides' mullions/fins into `[0..0.25..0.50..0.75..1.0)` quadrants of a pixel-registered whole-facade video map + UV mask.
+
+## 2026-11-03 (click-to-edit, hosting measurements)
+- **F1 click-to-edit:** click the element map to add an element (SAM point prompt) or remove one with the "x"; rigs are rebuilt from the edited map (`POST /api/sessions/{id}/elements`).
+- **Hardening:** unreadable uploads return a clean 400; an F3 fallback to the procedural texture is logged; a missing `MODEL_API_KEY` gives a clear error.
+- **Hosting measurements:** peak memory is about 650 MB for `/api/analyze` and 1.8 GB for `/api/generate`; Meta's API rejected requests from Render's Frankfurt region. Docker support kept; `render.yaml` removed. See README "Deploy".
+- **Metrics:** `scripts/metrics.py` and `METRICS.md`, misses included.
+
+## 2026-11-04 (Studio redesign, sign-in, mask and coverage fixes, samples)
+- **Landing page, demo sign-in and Studio redesign:** `/` landing, `/login`, `/studio`. Sign-in is env-driven (`DEMO_PASSWORD`, `DEMO_USERS`) and gates the Studio and all `/api/*` routes; with no password set, auth is off. The Studio shows a Photo -> Layout -> Show -> Check flow, live progress, inline errors, and scales to the viewport.
+- **F1 mask fix:** SAM returns each mask tile downscaled; the paste ignored that and shrank large masks toward the upper-left of the object. Tiles are now resized to their bounds before pasting (`place_tile` in `app/mapper.py`). Index Tower sample: 492 fixtures (mostly in the sky) -> 2,315 on the tower.
+- **F4 survey rig coverage:** two surveyed elevations are mapped onto the two visible faces, and the short elevation onto the podium. Silhouette coverage 0.82 -> 0.96, base 0.54 -> 0.93.
+- **F5 text fix:** the auto-fix keeps a readable token ("UAE NATIONAL DAY 55" -> "UAE 55", was "UAE N").
+- **Auth fix:** `.env` is loaded at startup so the sign-in gate is on from the first request.
+- **Samples:** bundled Index Tower sample (Aidas U., CC BY 3.0) in `app/static/samples/`; the synthetic four-sides demo is labelled as one photo reused.
