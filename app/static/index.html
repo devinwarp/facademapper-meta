@@ -2,939 +2,498 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Facade Mapper Studio — Architecture-Aware Fixture &amp; Show Design</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio - Facade Mapper Intel</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23201d19'/%3E%3Crect x='3' y='3' width='2' height='10' fill='%23706a60'/%3E%3Crect x='7' y='3' width='2' height='10' fill='%23e8cf93'/%3E%3Crect x='11' y='3' width='2' height='10' fill='%23706a60'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=Schibsted+Grotesk:wght@400..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/theme.css">
   <style>
-    :root {
-      --bg: #070b14;
-      --panel: #0d1424;
-      --panel-2: #121c32;
-      --border: #1e2d4a;
-      --border-hi: #38bdf8;
-      --text: #eef3fb;
-      --muted: #93a4c3;
-      --accent: #38bdf8;
-      --accent-2: #fbbf24;
-      --ok: #34d399;
-      --warn: #f59e0b;
-      --danger: #f87171;
-      --radius: 12px;
-      --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
-    }
-    * { box-sizing: border-box; }
+    /* Local token (not in theme.css): darker backdrop so the building image is the brightest thing on screen. */
+    :root { --surface-stage: oklch(0.12 0.006 70); }
+
+    html, body { height: 100%; }
     body {
-      margin: 0;
-      background: radial-gradient(circle at 80% 0%, #0f1b33 0%, var(--bg) 55%);
-      color: var(--text);
-      font-family: var(--font);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    header.topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 14px 24px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(7, 11, 20, 0.88);
-      backdrop-filter: blur(12px);
-      position: sticky;
-      top: 0;
-      z-index: 30;
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .brand-mark {
-      width: 34px;
-      height: 34px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #0ea5e9 0%, #fbbf24 100%);
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 3px;
-      padding: 6px;
-    }
-    .brand-mark span {
-      background: #070b14;
-      border-radius: 1px;
-    }
-    .brand-mark span:nth-child(odd) {
-      background: rgba(255, 255, 255, 0.92);
-    }
-    .brand h1 {
-      font-size: 1.05rem;
-      font-weight: 700;
-      margin: 0;
-      letter-spacing: -0.01em;
-    }
-    .brand p {
-      margin: 2px 0 0;
-      font-size: 0.76rem;
-      color: var(--muted);
-    }
-    nav.stepper ol {
-      list-style: none;
-      display: flex;
-      gap: 8px;
-      margin: 0;
-      padding: 0;
-      flex-wrap: wrap;
-    }
-    .step-pill {
-      background: var(--panel);
-      color: var(--muted);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 7px 14px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      transition: border-color 0.15s, color 0.15s, background 0.15s;
-    }
-    .step-pill[disabled] {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
-    .step-pill.active {
-      color: var(--text);
-      border-color: var(--accent);
-      background: rgba(56, 189, 248, 0.13);
-    }
-    .step-pill.done .num {
-      background: var(--ok);
-      color: #04130d;
-    }
-    .step-pill .num {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: var(--panel-2);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.72rem;
-    }
-    .model-badges {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.7rem;
-      font-weight: 600;
-      padding: 3px 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      background: rgba(56, 189, 248, 0.1);
-      color: #bae6fd;
-    }
-    .badge.new {
-      border-color: rgba(251, 191, 36, 0.45);
-      background: rgba(251, 191, 36, 0.12);
-      color: #fde68a;
-    }
-    main.workspace {
-      flex: 1;
-      display: grid;
-      grid-template-columns: minmax(380px, 470px) 1fr;
-      gap: 20px;
-      padding: 20px 24px;
-      max-width: 1680px;
-      width: 100%;
-      margin: 0 auto;
-    }
-    @media (max-width: 1024px) {
-      main.workspace {
-        grid-template-columns: 1fr;
-      }
-    }
-    aside.controls {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .card {
-      background: rgba(13, 20, 36, 0.92);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px;
-    }
-    .card-head {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-    .card h2 {
-      margin: 0;
-      font-size: 0.98rem;
-      font-weight: 700;
-    }
-    .card h3 {
-      margin: 14px 0 8px;
-      font-size: 0.84rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .sub {
-      margin: 4px 0 0;
-      font-size: 0.81rem;
-      color: var(--muted);
-      line-height: 1.45;
-    }
-    .dropzone {
-      border: 1.5px dashed #2d446e;
-      border-radius: 10px;
-      padding: 22px 16px;
-      text-align: center;
-      background: rgba(18, 28, 50, 0.55);
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-      display: block;
-    }
-    .dropzone:hover, .dropzone.dragover {
-      border-color: var(--accent);
-      background: rgba(56, 189, 248, 0.08);
-    }
-    .dropzone input {
-      display: none;
-    }
-    .drop-title {
-      font-weight: 600;
-      font-size: 0.9rem;
-      margin-bottom: 4px;
-    }
-    .drop-hint {
-      font-size: 0.77rem;
-      color: var(--muted);
-    }
-    .preset-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 12px;
-    }
-    .btn {
-      appearance: none;
-      border: 1px solid var(--border);
-      background: var(--panel-2);
-      color: var(--text);
-      font-family: inherit;
-      font-size: 0.83rem;
-      font-weight: 600;
-      padding: 9px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: transform 0.08s, border-color 0.15s, background 0.15s;
-      text-decoration: none;
-    }
-    .btn:hover:not([disabled]) {
-      border-color: #4b679b;
-      background: #182642;
-    }
-    .btn[disabled] {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .btn-primary {
-      width: 100%;
-      background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
-      border-color: #38bdf8;
-      color: #fff;
-      padding: 11px 16px;
-      font-size: 0.88rem;
-      margin-top: 12px;
-    }
-    .btn-primary:hover:not([disabled]) {
-      background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
-      border-color: #7dd3fc;
-    }
-    .btn-amber {
-      background: rgba(245, 158, 11, 0.18);
-      border-color: #f59e0b;
-      color: #fde68a;
-    }
-    .option-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .opt-card {
-      text-align: left;
-      width: 100%;
-      background: var(--panel-2);
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      padding: 11px;
-      color: var(--text);
-      cursor: pointer;
-      display: grid;
-      grid-template-columns: 68px 1fr;
-      gap: 12px;
-      align-items: center;
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .opt-card:hover {
-      border-color: #3b598f;
-    }
-    .opt-card.selected {
-      border-color: var(--accent);
-      background: rgba(56, 189, 248, 0.1);
-      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
-    }
-    .opt-thumb {
-      width: 68px;
-      height: 86px;
-      object-fit: cover;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: #050811;
-    }
-    .opt-title-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-bottom: 3px;
-    }
-    .opt-title {
-      font-weight: 700;
-      font-size: 0.86rem;
-    }
-    .opt-sub {
-      font-size: 0.76rem;
-      color: var(--muted);
-      line-height: 1.35;
-      margin-bottom: 6px;
-    }
-    .opt-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      font-size: 0.72rem;
-      color: #bae6fd;
-    }
-    .swatches {
-      display: inline-flex;
-      gap: 4px;
-      align-items: center;
-    }
-    .swatch {
-      width: 13px;
-      height: 13px;
-      border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.35);
-    }
-    .zone-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .zone-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.74rem;
-      padding: 4px 9px;
-      border-radius: 999px;
-      background: var(--panel-2);
-      border: 1px solid var(--border);
-      cursor: pointer;
-      user-select: none;
-    }
-    .zone-chip input {
-      accent-color: var(--accent);
-      margin: 0;
-    }
-    textarea, select, input[type="number"] {
-      width: 100%;
-      background: #080e1c;
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 9px 11px;
-      font-family: inherit;
-      font-size: 0.83rem;
-    }
-    textarea {
-      min-height: 74px;
-      resize: vertical;
-    }
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 10px;
-    }
-    label.field-label {
-      display: block;
-      font-size: 0.76rem;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
-    section.stage {
-      background: rgba(10, 16, 30, 0.9);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      display: flex;
-      flex-direction: column;
+      grid-template-rows: auto auto minmax(0, 1fr);
       overflow: hidden;
-      min-height: 680px;
     }
-    .stage-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(13, 20, 36, 0.95);
-      flex-wrap: wrap;
-    }
-    .view-tabs {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .tab-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      padding: 6px 11px;
-      border-radius: 7px;
-      font-size: 0.77rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .tab-btn.active {
-      background: rgba(56, 189, 248, 0.15);
-      border-color: var(--accent);
-      color: var(--text);
-    }
-    .stage-canvas {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-      position: relative;
-      background: #04070e;
-      overflow: auto;
-    }
-    .stage-canvas figure {
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      max-width: 100%;
-    }
-    .media-frame {
-      max-width: 100%;
-      max-height: 72vh;
-      border-radius: 8px;
-      border: 1px solid #1b2945;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
-      transition: transform 0.2s ease;
-      transform-origin: center center;
-    }
-    .media-frame.zoomed {
-      max-height: none;
-      max-width: none;
-      width: 1150px;
-      cursor: zoom-out;
-    }
-    figcaption.stage-cap {
-      margin-top: 10px;
-      font-size: 0.79rem;
-      color: var(--muted);
-      text-align: center;
-    }
-    .empty-stage {
-      text-align: center;
-      max-width: 440px;
-      color: var(--muted);
-      padding: 40px 20px;
-    }
-    .empty-stage h2 {
-      color: var(--text);
-      font-size: 1.15rem;
-      margin-bottom: 8px;
-    }
-    .timeline-box {
-      border-top: 1px solid var(--border);
-      padding: 14px 18px;
-      background: rgba(13, 20, 36, 0.95);
-    }
-    .step-row {
-      display: grid;
-      grid-template-columns: 74px 96px 1fr;
-      gap: 10px;
-      align-items: center;
-      font-size: 0.78rem;
-      padding: 6px 0;
-      border-bottom: 1px solid rgba(30, 45, 74, 0.55);
-    }
-    .step-row:last-child { border-bottom: none; }
-    .audit-box {
-      border-radius: 9px;
-      padding: 12px 14px;
-      margin-top: 10px;
-      font-size: 0.8rem;
-      line-height: 1.45;
-    }
-    .audit-box.pass {
-      background: rgba(52, 211, 153, 0.1);
-      border: 1px solid rgba(52, 211, 153, 0.4);
-      color: #d1fae5;
-    }
-    .audit-box.fail {
-      background: rgba(245, 158, 11, 0.12);
-      border: 1px solid rgba(245, 158, 11, 0.45);
-      color: #fef3c7;
-    }
-    .status-toast {
-      display: none;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      border-radius: 8px;
-      background: rgba(14, 165, 233, 0.14);
-      border: 1px solid rgba(56, 189, 248, 0.4);
-      font-size: 0.81rem;
-      color: #e0f2fe;
-    }
-    .status-toast.visible { display: flex; }
-    .spinner {
-      width: 15px;
-      height: 15px;
-      border: 2px solid rgba(255, 255, 255, 0.25);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.75s linear infinite;
-      flex-shrink: 0;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
     .hidden { display: none !important; }
-    details.adv {
-      margin-top: 10px;
-      font-size: 0.78rem;
-      color: var(--muted);
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+    /* ---------- top bar ---------- */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between; gap: var(--space-md);
+      height: 64px; padding: 0 var(--space-lg);
+      border-bottom: 1px solid var(--line-subtle);
     }
-    details.adv summary {
-      cursor: pointer;
-      user-select: none;
+    .topbar-right { display: flex; align-items: center; gap: var(--space-md); }
+    .models { display: flex; gap: var(--space-2xs); }
+    .topbar .overview { color: var(--text-secondary); font-size: var(--text-sm); text-underline-offset: 4px; }
+    .topbar .overview:hover { color: var(--text-primary); }
+    .topbar form { margin: 0; }
+    .btn--sm { min-height: 40px; padding: 0 var(--space-md); font-size: var(--text-sm); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn--block { width: 100%; white-space: normal; text-align: center; padding-top: var(--space-2xs); padding-bottom: var(--space-2xs); }
+
+    /* ---------- 4-step flow ---------- */
+    .flow { border-bottom: 1px solid var(--line-subtle); background: var(--surface-raised); }
+    .flow ol { list-style: none; margin: 0; padding: 0 var(--space-lg); display: flex; gap: var(--space-xl); }
+    .flow button {
+      display: flex; align-items: center; gap: var(--space-xs);
+      min-height: 56px; padding: 0; border: 0; background: none; cursor: pointer;
+      font-family: var(--font-display); font-stretch: 112%; font-size: var(--text-base); font-weight: 600;
+      color: var(--text-tertiary);
     }
-    .export-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 12px;
+    .flow button:disabled { cursor: default; }
+    .flow .num {
+      display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+      border: 1px solid var(--line-strong); font-size: var(--text-sm); font-variant-numeric: tabular-nums;
     }
-    .mode-switch {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
-      padding: 4px;
-      border-radius: 10px;
-      background: #080e1c;
-      border: 1px solid var(--border);
-      margin-bottom: 12px;
+    .flow .state { font-family: var(--font-body); font-stretch: 100%; font-weight: 400; font-size: var(--text-sm); }
+    .flow button:not(:disabled):hover { color: var(--text-primary); }
+    .flow li.done button { color: var(--text-secondary); }
+    .flow li.done .num { border-color: var(--text-secondary); }
+    .flow li.current button { color: var(--text-primary); }
+    .flow li.current .num { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+    .flow li.current .state { color: var(--accent); }
+
+    /* ---------- workspace ---------- */
+    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 460px; min-height: 0; }
+    .stage { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--line-subtle); }
+    .stage-bar {
+      display: flex; align-items: center; justify-content: space-between; gap: var(--space-md);
+      padding: var(--space-xs) var(--space-md); border-bottom: 1px solid var(--line-subtle); min-height: 60px;
     }
-    .mode-btn {
-      appearance: none;
-      border: 1px solid transparent;
-      background: transparent;
-      color: var(--muted);
-      font-family: inherit;
-      font-size: 0.77rem;
-      font-weight: 600;
-      padding: 8px 10px;
-      border-radius: 7px;
-      cursor: pointer;
-      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    .view-tabs { display: flex; gap: var(--space-2xs); flex-wrap: wrap; }
+    .tab-btn {
+      min-height: 40px; padding: 0 var(--space-sm); border: 1px solid transparent; border-radius: var(--radius-control);
+      background: none; color: var(--text-secondary); cursor: pointer;
+      font: 500 var(--text-sm) var(--font-body);
+      transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
     }
-    .mode-btn.active {
-      background: rgba(56, 189, 248, 0.15);
-      border-color: rgba(56, 189, 248, 0.55);
-      color: var(--text);
+    .tab-btn:hover { color: var(--text-primary); background: var(--surface-raised); }
+    .tab-btn.active { color: var(--text-primary); background: var(--surface-overlay); border-color: var(--line-strong); font-weight: 600; }
+
+    .progress {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2xs) var(--space-lg); align-items: center;
+      padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--line-subtle); background: var(--surface-raised);
     }
-    .side-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 10px;
-      margin-bottom: 12px;
+    .progress .p-name { font-family: var(--font-display); font-stretch: 112%; font-weight: 600; font-size: var(--text-base); display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
+    .progress .p-what { grid-column: 1; color: var(--text-secondary); font-size: var(--text-sm); }
+    .progress .p-time { grid-row: 1 / span 2; grid-column: 2; text-align: right; font-family: var(--font-display); font-stretch: 112%; font-size: var(--text-lg); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .progress .p-time small { display: block; font-family: var(--font-body); font-size: var(--text-sm); font-weight: 400; color: var(--text-tertiary); }
+    .bar { grid-column: 1 / -1; height: 3px; background: var(--line-subtle); overflow: hidden; border-radius: 2px; }
+    .bar i { display: block; width: 28%; height: 100%; background: var(--accent); animation: sweep 1.6s var(--ease-out) infinite; }
+    @keyframes sweep { from { transform: translateX(-100%); } to { transform: translateX(360%); } }
+
+    .stage-canvas {
+      flex: 1; min-height: 0; overflow: auto; background: var(--surface-stage);
+      display: grid; place-items: center; padding: var(--space-md);
     }
-    .side-slot {
-      position: relative;
-      border: 1.5px dashed #2d446e;
-      border-radius: 9px;
-      background: rgba(18, 28, 50, 0.52);
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      transition: border-color 0.15s, background 0.15s;
+    .stage-canvas figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: var(--space-sm); width: 100%; height: 100%; min-height: 0; }
+    .media-frame {
+      flex: 1 1 0; min-height: 0; max-width: 100%; object-fit: contain;
+      border: 1px solid var(--line-subtle); border-radius: var(--radius-control); background: var(--surface-base);
     }
-    .side-slot.filled {
-      border-style: solid;
-      border-color: rgba(52, 211, 153, 0.55);
-      background: rgba(14, 29, 38, 0.65);
+    .media-frame.zoomed { flex: none; max-width: none; width: 1150px; height: auto; cursor: zoom-out; }
+    .stage-canvas figure:has(.zoomed) { height: auto; }
+    .media-frame.pickable { cursor: crosshair; }
+    figcaption.stage-cap { flex: none; max-width: 90ch; text-align: center; color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.5; }
+    .stage-hint { flex: none; max-width: 90ch; text-align: center; font-size: var(--text-sm); color: var(--accent); }
+
+    #add-el-box {
+      display: flex; gap: var(--space-xs); align-items: center; flex: none;
+      padding: var(--space-xs); border: 1px solid var(--accent); border-radius: var(--radius-control); background: var(--surface-overlay);
     }
-    .side-slot.dragover {
-      border-color: var(--accent);
-      background: rgba(56, 189, 248, 0.12);
+    #add-el-box span { font-size: var(--text-sm); color: var(--text-secondary); white-space: nowrap; }
+    #add-el-box input { min-height: 44px; width: 260px; padding: 0 var(--space-sm); border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: var(--surface-base); color: var(--text-primary); font: inherit; }
+    #add-el-box button { min-height: 44px; padding: 0 var(--space-md); border-radius: var(--radius-control); border: 1px solid var(--line-strong); background: none; color: var(--text-primary); font: 600 var(--text-sm) var(--font-display); cursor: pointer; }
+    #add-el-box button[type="submit"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
+    /* empty state */
+    .empty { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 4fr); gap: var(--space-xl); align-items: center; width: min(100%, 1080px); }
+    .empty h2 { font-size: var(--text-xl); margin: var(--space-xs) 0 var(--space-md); }
+    .empty ul { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-sm); color: var(--text-secondary); }
+    .empty li { padding-top: var(--space-sm); border-top: 1px solid var(--line-subtle); }
+    .empty li b { color: var(--text-primary); font-weight: 600; }
+    .empty figure { position: relative; margin: 0; height: 420px; min-height: 0; width: auto; display: block; }
+    .empty canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .empty figcaption { position: absolute; bottom: 0; left: 0; font-size: var(--text-xs); color: var(--text-tertiary); text-align: left; }
+
+    /* timeline */
+    .timeline { border-top: 1px solid var(--line-subtle); padding: var(--space-sm) var(--space-md); max-height: 230px; overflow: auto; }
+    .timeline-head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-md); margin-bottom: var(--space-2xs); }
+    .timeline-head strong { font-family: var(--font-display); font-stretch: 112%; font-weight: 600; }
+    .step-row { display: grid; grid-template-columns: 110px 190px minmax(0, 1fr); gap: var(--space-sm); padding: var(--space-2xs) 0; border-top: 1px solid var(--line-subtle); font-size: var(--text-sm); align-items: baseline; }
+    .step-row .t { color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+    .step-row .z { color: var(--text-tertiary); }
+
+    /* ---------- side panel ---------- */
+    .panel { overflow-y: auto; padding: var(--space-lg); display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: var(--space-lg); background: var(--surface-base); }
+    .panel h2 { font-size: var(--text-lg); }
+    .panel h3 { font-size: var(--text-base); font-stretch: 112%; margin-bottom: var(--space-xs); }
+    .head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-sm); }
+    .help { color: var(--text-secondary); font-size: var(--text-sm); margin-top: var(--space-2xs); line-height: 1.5; }
+    .block { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-sm); align-content: start; }
+    .block > .label { margin-bottom: calc(var(--space-2xs) * -1); }
+
+    .alert {
+      border: 1px solid var(--danger); border-radius: var(--radius-control); background: var(--danger-surface);
+      padding: var(--space-sm); display: grid; gap: var(--space-2xs); font-size: var(--text-sm);
     }
-    .side-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.71rem;
-      font-weight: 700;
-      color: #bae6fd;
-      letter-spacing: 0.02em;
+    .alert strong { color: var(--danger); font-size: var(--text-base); font-weight: 600; }
+    .alert .fix { color: var(--text-secondary); }
+    .alert button { justify-self: start; margin-top: var(--space-2xs); }
+
+    .dropzone {
+      display: grid; gap: var(--space-2xs); justify-items: start; padding: var(--space-md);
+      border: 1px dashed var(--line-strong); border-radius: var(--radius-control); cursor: pointer;
+      transition: border-color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
     }
-    .side-pick {
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 86px;
-      border-radius: 6px;
-      background: rgba(7, 11, 20, 0.55);
-      overflow: hidden;
-      text-align: center;
-      padding: 6px;
+    .dropzone:hover, .dropzone.dragover, .dropzone:focus-within { border-color: var(--accent); background: var(--surface-raised); }
+    .dropzone .d-title { font-weight: 600; color: var(--text-primary); }
+    .dropzone .d-hint { font-size: var(--text-sm); color: var(--text-secondary); }
+    .dropzone .d-thumb { width: 100%; max-height: 150px; object-fit: cover; border-radius: var(--radius-control); border: 1px solid var(--line-subtle); }
+    details.adv summary { cursor: pointer; font-size: var(--text-sm); color: var(--text-secondary); padding: var(--space-2xs) 0; }
+    details.adv summary:hover { color: var(--text-primary); }
+    details.adv input[type=file] { margin-top: var(--space-2xs); font-size: var(--text-sm); color: var(--text-secondary); max-width: 100%; }
+
+    .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--line-strong); border-radius: var(--radius-control); overflow: hidden; }
+    .seg button { min-height: 44px; border: 0; background: none; color: var(--text-secondary); font: 600 var(--text-sm) var(--font-display); cursor: pointer; }
+    .seg button + button { border-left: 1px solid var(--line-strong); }
+    .seg button.active { background: var(--surface-overlay); color: var(--text-primary); }
+    .seg button:hover:not(.active) { color: var(--text-primary); }
+
+    .presets { display: grid; gap: var(--space-2xs); }
+
+    .side-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xs); }
+    .side-slot { border: 1px dashed var(--line-strong); border-radius: var(--radius-control); padding: var(--space-xs); display: grid; gap: var(--space-2xs); }
+    .side-slot.filled { border-style: solid; }
+    .side-slot.dragover { border-color: var(--accent); }
+    .side-head { display: flex; justify-content: space-between; font-size: var(--text-sm); font-weight: 600; }
+    .side-head span:last-child { color: var(--text-tertiary); font-weight: 400; }
+    .side-pick { display: grid; place-items: center; min-height: 72px; cursor: pointer; background: var(--surface-raised); border-radius: var(--radius-control); overflow: hidden; text-align: center; padding: var(--space-2xs); }
+    .side-pick:focus-within { outline: 2px solid var(--accent); }
+    .side-thumb { width: 100%; height: 72px; object-fit: cover; display: block; }
+    .side-name { font-size: var(--text-sm); color: var(--text-secondary); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .side-swap { display: flex; justify-content: space-between; gap: var(--space-2xs); }
+    .mini-btn { min-height: 32px; padding: 0 var(--space-xs); border: 1px solid var(--line-strong); border-radius: var(--radius-control); background: none; color: var(--text-secondary); font: 500 var(--text-sm) var(--font-body); cursor: pointer; }
+    .mini-btn:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+
+    .summary { display: flex; justify-content: space-between; align-items: center; gap: var(--space-sm); padding-bottom: var(--space-sm); border-bottom: 1px solid var(--line-subtle); font-size: var(--text-sm); color: var(--text-secondary); }
+    .summary b { color: var(--text-primary); font-weight: 600; }
+
+    .option-list { display: grid; gap: var(--space-xs); }
+    .opt-card {
+      display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: var(--space-sm); align-items: start; text-align: left; width: 100%;
+      padding: var(--space-xs); border: 1px solid var(--line-subtle); border-radius: var(--radius-control);
+      background: var(--surface-raised); color: var(--text-primary); font: inherit; cursor: pointer;
+      transition: border-color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
     }
-    .side-pick input { display: none; }
-    .side-thumb {
-      width: 100%;
-      height: 82px;
-      object-fit: cover;
-      border-radius: 5px;
-      display: block;
+    .opt-card:hover { border-color: var(--line-strong); }
+    .opt-card.selected { border-color: var(--accent); background: var(--surface-overlay); }
+    .opt-thumb { width: 76px; height: 96px; object-fit: cover; border-radius: var(--radius-control); background: var(--surface-stage); }
+    .opt-title-row { display: flex; align-items: center; gap: var(--space-2xs); flex-wrap: wrap; }
+    .opt-title { font-family: var(--font-display); font-stretch: 108%; font-weight: 600; }
+    .opt-sub { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.4; margin: 2px 0 var(--space-2xs); }
+    .opt-meta { display: flex; flex-wrap: wrap; gap: var(--space-2xs) var(--space-sm); font-size: var(--text-sm); color: var(--text-secondary); }
+    .opt-meta b { color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .chip--solid { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+    .swatches { display: inline-flex; gap: 4px; }
+    .swatch { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--line-strong); }
+
+    .zone-chips { display: flex; flex-wrap: wrap; gap: var(--space-2xs); }
+    .zone-chip { display: inline-flex; align-items: center; border: 1px solid var(--line-strong); border-radius: var(--radius-control); font-size: var(--text-sm); }
+    .zone-chip label { display: inline-flex; align-items: center; gap: var(--space-2xs); padding: 6px var(--space-xs); cursor: pointer; }
+    .zone-chip input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+    .zone-chip .cnt { color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+    .zone-chip .el-x { align-self: stretch; min-width: 36px; border: 0; border-left: 1px solid var(--line-subtle); background: none; color: var(--text-secondary); font-size: var(--text-lg); line-height: 1; cursor: pointer; }
+    .zone-chip .el-x:hover { color: var(--danger); }
+
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm); }
+    select.input { padding-right: var(--space-sm); }
+    textarea.input { padding: var(--space-xs) var(--space-sm); min-height: 120px; resize: vertical; line-height: 1.5; }
+
+    .check { display: grid; gap: var(--space-xs); padding: var(--space-sm); border: 1px solid var(--line-subtle); border-radius: var(--radius-control); font-size: var(--text-sm); }
+    .check.fail { border-color: var(--danger); }
+    .check .c-title { display: flex; align-items: center; gap: var(--space-xs); flex-wrap: wrap; font-family: var(--font-display); font-stretch: 110%; font-size: var(--text-base); font-weight: 600; }
+    .check.pass .verdict { color: var(--ok); }
+    .check.fail .verdict { color: var(--danger); }
+    .flags { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-xs); }
+    .flags li { padding-top: var(--space-xs); border-top: 1px solid var(--line-subtle); }
+    .flags .at { font-weight: 600; font-variant-numeric: tabular-nums; }
+    .flags .fixline { color: var(--text-secondary); margin-top: 2px; }
+    .ba { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xs); }
+    .ba > div { padding: var(--space-xs); border: 1px solid var(--line-subtle); border-radius: var(--radius-control); display: grid; gap: var(--space-2xs); align-content: start; }
+    .ba .verdict { font-weight: 600; }
+    .ba .ok { color: var(--ok); }
+    .check .ba .bad { color: var(--danger); }
+    .check .ba .ok { color: var(--ok); }
+    .tex { display: grid; gap: var(--space-2xs); font-size: var(--text-sm); color: var(--text-secondary); }
+    .tex.fallback { color: var(--text-primary); }
+    .exports { display: grid; gap: var(--space-2xs); }
+    .exports .btn { justify-content: space-between; min-height: 48px; padding: 0 var(--space-md); font-size: var(--text-sm); }
+    .exports .btn span:last-child { color: var(--text-tertiary); font-family: var(--font-body); font-weight: 400; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .bar i { animation: none; width: 100%; opacity: 0.55; }
     }
-    .side-name {
-      font-size: 0.7rem;
-      color: var(--muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-    }
-    .side-swap-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 4px;
-    }
-    .mini-btn {
-      appearance: none;
-      border: 1px solid var(--border);
-      background: var(--panel);
-      color: var(--muted);
-      font-size: 0.68rem;
-      padding: 2px 6px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .mini-btn:hover { color: var(--text); border-color: #4b679b; }
   </style>
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">
-      <div class="brand-mark" aria-hidden="true">
-        <span></span><span></span><span></span>
-        <span></span><span></span><span></span>
-        <span></span><span></span><span></span>
+    <a class="wordmark" href="/" aria-label="Facade Mapper Intel, overview">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect x="3" y="3" width="3" height="16" fill="oklch(0.5 0.012 72)"/><rect x="9.5" y="3" width="3" height="16" fill="oklch(0.84 0.10 82)"/><rect x="16" y="3" width="3" height="16" fill="oklch(0.5 0.012 72)"/></svg>
+      Facade Mapper Intel
+      <span class="label" style="margin-left:var(--space-2xs)">Studio</span>
+    </a>
+    <div class="topbar-right">
+      <div class="models" aria-label="Meta AI models used">
+        <span class="chip">New · SAM 3.1</span>
+        <span class="chip">New · Muse Spark 1.3</span>
+        <span class="chip">New · Muse Image 1.0</span>
       </div>
-      <div>
-        <h1>Facade Mapper Studio</h1>
-        <p>Architecture-aware fixture placement, show concepts &amp; discrete-pixel rendering</p>
-      </div>
-    </div>
-
-    <nav class="stepper" aria-label="Workflow steps">
-      <ol>
-        <li>
-          <button type="button" class="step-pill active" id="nav-step-1" data-step="1">
-            <span class="num">1</span> Photo &amp; Fixture Locations
-          </button>
-        </li>
-        <li>
-          <button type="button" class="step-pill" id="nav-step-2" data-step="2" disabled>
-            <span class="num">2</span> Lighting Concepts
-          </button>
-        </li>
-        <li>
-          <button type="button" class="step-pill" id="nav-step-3" data-step="3" disabled>
-            <span class="num">3</span> Show Preview &amp; Export
-          </button>
-        </li>
-      </ol>
-    </nav>
-
-    <div class="model-badges" aria-label="Active Meta AI models">
-      <span class="badge new">New · SAM 3.1</span>
-      <span class="badge new">New · Muse Spark 1.3</span>
-      <span class="badge new">New · Muse Image 1.0</span>
+      <a class="overview" href="/">Back to overview</a>
+      <form method="post" action="/logout"><button class="btn btn--ghost btn--sm" type="submit">Sign out</button></form>
     </div>
   </header>
 
+  <nav class="flow" aria-label="Workflow">
+    <ol>
+      <li class="current" data-flow="1"><button type="button" id="nav-step-1" aria-current="step"><span class="num">1</span>Photo<span class="state">Current</span></button></li>
+      <li data-flow="2"><button type="button" id="nav-step-2" disabled><span class="num">2</span>Layout<span class="state"></span></button></li>
+      <li data-flow="3"><button type="button" id="nav-step-3" disabled><span class="num">3</span>Show<span class="state"></span></button></li>
+      <li data-flow="4"><button type="button" id="nav-step-4" disabled><span class="num">4</span>Check<span class="state"></span></button></li>
+    </ol>
+  </nav>
+
   <main class="workspace">
-    <aside class="controls">
-      <div id="status-banner" class="status-toast" role="status" aria-live="polite">
-        <span class="spinner" aria-hidden="true"></span>
-        <span id="status-text">Working…</span>
+    <section class="stage" aria-label="Facade preview">
+      <div class="stage-bar">
+        <div class="view-tabs" id="stage-tabs" role="group" aria-label="Views"></div>
+        <button type="button" class="btn btn--ghost btn--sm" id="btn-zoom" disabled>Inspect at 2×</button>
       </div>
 
-      <!-- STEP 1 PANEL -->
-      <section class="card" id="panel-step-1" aria-labelledby="h-step-1">
-        <div class="card-head">
-          <div>
-            <h2 id="h-step-1">1. Building Photo(s) &amp; Fixture Locations</h2>
-            <p class="sub" id="step1-sub">Upload one viewpoint photo, or upload &amp; stitch all 4 sides of the building to create a full 360° video facade map.</p>
-          </div>
-          <span class="badge">SAM 3.1</span>
-        </div>
-
-        <div class="mode-switch" role="group" aria-label="Capture mode">
-          <button type="button" class="mode-btn active" id="mode-single-btn">📷 Single Photo (1–2 Sides)</button>
-          <button type="button" class="mode-btn" id="mode-stitch-btn">🌐 Stitch All 4 Sides (360° Map)</button>
-        </div>
-
-        <!-- SINGLE PHOTO UPLOADER -->
-        <div id="single-upload-pane">
-          <label class="dropzone" id="photo-drop">
-            <input type="file" id="photo-input" accept="image/*">
-            <div class="drop-title" id="drop-title">Drop building photo or click to browse</div>
-            <div class="drop-hint">Daytime, dusk, or night facade photograph (JPG / PNG / WebP)</div>
-          </label>
-
-          <details class="adv">
-            <summary>Optional: Attach As-Built CAD / UV Survey Mask (.png)</summary>
-            <div style="margin-top:8px;">
-              <input type="file" id="survey-input" accept="image/png,image/*">
-            </div>
-          </details>
-
-          <div id="preset-container" class="preset-row hidden"></div>
-        </div>
-
-        <!-- 4-SIDE STITCH UPLOADER -->
-        <div id="stitch-upload-pane" class="hidden">
-          <label class="dropzone" id="batch-4-drop" style="padding:14px 12px;">
-            <input type="file" id="batch-4-input" accept="image/*" multiple>
-            <div class="drop-title" style="font-size:0.83rem;">📁 Select or Drop All 4 Building Sides at Once</div>
-            <div class="drop-hint">Or click each elevation slot below in wrap order (North → East → South → West)</div>
-          </label>
-
-          <div class="side-grid" id="side-grid">
-            <div class="side-slot" data-side="0">
-              <div class="side-head"><span>SIDE 1 · NORTH</span><span>0°–90°</span></div>
-              <label class="side-pick">
-                <input type="file" accept="image/*" data-side-input="0">
-                <img class="side-thumb hidden" id="side-thumb-0" alt="Side 1 North preview">
-                <span class="side-name" id="side-name-0">+ Upload Side 1</span>
-              </label>
-              <div class="side-swap-bar">
-                <span style="font-size:0.67rem;color:var(--muted);">Front</span>
-                <button type="button" class="mini-btn" data-swap="0,1" title="Swap Side 1 and Side 2">Swap ▶</button>
-              </div>
-            </div>
-
-            <div class="side-slot" data-side="1">
-              <div class="side-head"><span>SIDE 2 · EAST</span><span>90°–180°</span></div>
-              <label class="side-pick">
-                <input type="file" accept="image/*" data-side-input="1">
-                <img class="side-thumb hidden" id="side-thumb-1" alt="Side 2 East preview">
-                <span class="side-name" id="side-name-1">+ Upload Side 2</span>
-              </label>
-              <div class="side-swap-bar">
-                <button type="button" class="mini-btn" data-swap="0,1" title="Swap Side 1 and Side 2">◀</button>
-                <span style="font-size:0.67rem;color:var(--muted);">Right</span>
-                <button type="button" class="mini-btn" data-swap="1,2" title="Swap Side 2 and Side 3">▶</button>
-              </div>
-            </div>
-
-            <div class="side-slot" data-side="2">
-              <div class="side-head"><span>SIDE 3 · SOUTH</span><span>180°–270°</span></div>
-              <label class="side-pick">
-                <input type="file" accept="image/*" data-side-input="2">
-                <img class="side-thumb hidden" id="side-thumb-2" alt="Side 3 South preview">
-                <span class="side-name" id="side-name-2">+ Upload Side 3</span>
-              </label>
-              <div class="side-swap-bar">
-                <button type="button" class="mini-btn" data-swap="1,2" title="Swap Side 2 and Side 3">◀</button>
-                <span style="font-size:0.67rem;color:var(--muted);">Rear</span>
-                <button type="button" class="mini-btn" data-swap="2,3" title="Swap Side 3 and Side 4">▶</button>
-              </div>
-            </div>
-
-            <div class="side-slot" data-side="3">
-              <div class="side-head"><span>SIDE 4 · WEST</span><span>270°–360°</span></div>
-              <label class="side-pick">
-                <input type="file" accept="image/*" data-side-input="3">
-                <img class="side-thumb hidden" id="side-thumb-3" alt="Side 4 West preview">
-                <span class="side-name" id="side-name-3">+ Upload Side 4</span>
-              </label>
-              <div class="side-swap-bar">
-                <button type="button" class="mini-btn" data-swap="2,3" title="Swap Side 3 and Side 4">◀ Swap</button>
-                <span style="font-size:0.67rem;color:var(--muted);">Left</span>
-              </div>
-            </div>
-          </div>
-
-          <div id="stitch-preset-container" class="preset-row hidden" style="margin-bottom:10px;"></div>
-        </div>
-
-        <button type="button" class="btn btn-primary" id="btn-analyze" style="margin-top:10px;">
-          Detect Architecture &amp; Suggest Fixture Locations
-        </button>
-
-        <div id="rig-results" class="hidden">
-          <h3>Suggested Fixture Rig Options</h3>
-          <div id="rig-list" class="option-list"></div>
-
-          <h3>Active Architectural Zones (SAM 3.1)</h3>
-          <div id="zone-chips" class="zone-chips"></div>
-
-          <button type="button" class="btn btn-primary" id="btn-to-concepts">
-            Suggest Lighting Concepts for Selected Rig →
-          </button>
-        </div>
-      </section>
-
-      <!-- STEP 2 PANEL -->
-      <section class="card hidden" id="panel-step-2" aria-labelledby="h-step-2">
-        <div class="card-head">
-          <div>
-            <h2 id="h-step-2">2. Suggested Facade Concepts</h2>
-            <p class="sub">Muse Spark proposes 3 creative directions tailored to this building's real zones and your chosen fixture rig.</p>
-          </div>
-          <span class="badge">Muse Spark</span>
-        </div>
-
-        <div id="concept-list" class="option-list"></div>
-
-        <h3>Show Brief &amp; Timing</h3>
-        <label class="field-label" for="brief-input">Customize selected concept or write your own brief</label>
-        <textarea id="brief-input" placeholder="e.g. UAE National Day: flag colours climb the mullions from base to crown, then golden shimmer across the crown"></textarea>
-
-        <div class="form-row">
-          <div>
-            <label class="field-label" for="duration-select">Show Duration</label>
-            <select id="duration-select">
-              <option value="10">10 seconds (Quick preview)</option>
-              <option value="14" selected>14 seconds (Standard demo)</option>
-              <option value="20">20 seconds (Full sequence)</option>
-            </select>
-          </div>
-          <div>
-            <label class="field-label" for="texture-select">F3 Light-Art Plate</label>
-            <select id="texture-select">
-              <option value="true" selected>Muse Image 1.0 + 360° Shader</option>
-              <option value="false">Fast Procedural Silk Shader</option>
-            </select>
-          </div>
-        </div>
-
-        <div style="margin-top:10px;">
-          <label class="field-label" for="wrap-select">Camera View of 360° All-Sides Building Show</label>
-          <select id="wrap-select">
-            <option value="auto" selected>Auto-Detect Visible Side(s) from Silhouette</option>
-            <option value="0.25">1 Side · Single Elevation (90° slice of 360° canvas)</option>
-            <option value="0.45">2 Sides · Curved / Corner View (162° slice of 360° canvas)</option>
-            <option value="0.67">Wide Wrap · Panoramic View (240° slice of 360° canvas)</option>
-            <option value="1.0">All 4 Stitched Sides · Full 360° Video Facade Map (360°)</option>
-          </select>
-        </div>
-
-        <button type="button" class="btn btn-primary" id="btn-generate">
-          Generate Fixture-Accurate Show Video →
-        </button>
-      </section>
-
-      <!-- STEP 3 PANEL -->
-      <section class="card hidden" id="panel-step-3" aria-labelledby="h-step-3">
-        <div class="card-head">
-          <div>
-            <h2 id="h-step-3">3. Readability QA &amp; Media-Server Export</h2>
-            <p class="sub">Light is emitted strictly from <strong id="summary-fx-count">0</strong> physical fixture nodes — zero surface wash over glass bays.</p>
-          </div>
-          <span class="badge new">F4 + F5</span>
-        </div>
-
-        <div id="audit-container"></div>
-
-        <h3>Media-Server Deliverables</h3>
-        <p class="sub">Media servers map raw unmasked video onto physical addresses; download both the on-building client preview and unmasked canvas.</p>
-        <div class="export-row" id="export-links"></div>
-
-        <button type="button" class="btn" style="margin-top:14px;width:100%;" id="btn-back-concepts">
-          ← Try Another Concept or Fixture Rig
-        </button>
-      </section>
-    </aside>
-
-    <!-- MAIN STAGE VIEWPORT -->
-    <section class="stage" aria-label="Facade preview stage">
-      <div class="stage-bar">
-        <div class="view-tabs" id="stage-tabs">
-          <button type="button" class="tab-btn active" data-view="rig">Fixture Rig Preview</button>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <button type="button" class="btn" id="btn-zoom" style="padding:5px 10px;font-size:0.76rem;" disabled>
-            🔍 2× Inspect Fixtures
-          </button>
-        </div>
+      <div id="status-banner" class="progress hidden" role="status">
+        <div class="p-name"><span id="status-step">Working</span><span class="chip" id="status-model"></span></div>
+        <div class="p-time"><span id="status-elapsed">0 s</span><small id="status-range"></small></div>
+        <p class="p-what" id="status-text"></p>
+        <div class="bar" aria-hidden="true"><i></i></div>
       </div>
 
       <div class="stage-canvas" id="stage-canvas">
-        <div class="empty-stage" id="empty-state">
-          <h2>Content made for the building — not a flat wash.</h2>
-          <p>Upload any building photo on the left (or load a sample tower) to detect real mullions, fins, crown &amp; slab edges, compare fixture layout options, and render lighting concepts strictly on physical fixtures.</p>
+        <div class="empty" id="empty-state">
+          <div>
+            <p class="label">Nothing loaded yet</p>
+            <h2>Start with one clear photo of the building.</h2>
+            <ul>
+              <li><b>Whole building in frame.</b> Crown and base both visible, shot as straight-on as you can.</li>
+              <li><b>Daylight, dusk or night.</b> Avoid heavy fog, glare on the glass and trees covering the facade.</li>
+              <li><b>High resolution.</b> Mullions and fins need to be visible as separate lines.</li>
+              <li><b>No photo to hand?</b> Load a sample from the panel on the right.</li>
+            </ul>
+          </div>
+          <figure>
+            <canvas id="tower" role="img" aria-label="Illustration of a tower with rows of LED fixtures."></canvas>
+            <figcaption>Illustration drawn in code, not model output.</figcaption>
+          </figure>
         </div>
 
         <figure id="media-figure" class="hidden">
-          <img id="stage-img" class="media-frame" alt="Facade fixture preview">
+          <img id="stage-img" class="media-frame" alt="Facade preview">
           <video id="stage-video" class="media-frame hidden" controls autoplay loop muted playsinline></video>
+          <p class="stage-hint hidden" id="stage-hint">Click the map to add an element at that spot. Use the × on an element in the panel to remove one.</p>
           <figcaption class="stage-cap" id="stage-caption"></figcaption>
         </figure>
       </div>
 
-      <div id="timeline-panel" class="timeline-box hidden">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <strong id="plan-title" style="font-size:0.86rem;">Show Timeline</strong>
-          <span class="badge" id="tex-badge">Muse Spark Plan</span>
+      <div id="timeline-panel" class="timeline hidden">
+        <div class="timeline-head">
+          <strong id="plan-title">Show timeline</strong>
+          <span class="chip" id="tex-badge">Muse Spark 1.3 plan</span>
         </div>
         <div id="timeline-rows"></div>
       </div>
     </section>
+
+    <aside class="panel" aria-label="Controls">
+      <div class="alert hidden" id="error-box" role="alert">
+        <strong id="error-title"></strong>
+        <span id="error-detail"></span>
+        <span class="fix" id="error-fix"></span>
+        <button type="button" class="btn btn--ghost btn--sm" id="error-dismiss">Dismiss</button>
+      </div>
+
+      <!-- STEP 1 + 2: Photo, Layout -->
+      <section id="panel-step-1" class="block" style="gap:var(--space-lg)">
+        <div id="photo-summary" class="summary hidden">
+          <span id="photo-summary-text"></span>
+          <button type="button" class="btn btn--ghost btn--sm" id="btn-change-photo">Change photo</button>
+        </div>
+
+        <div id="photo-block" class="block" style="gap:var(--space-md)">
+          <div class="head">
+            <div>
+              <h2 id="h-step-1">Upload the building</h2>
+              <p class="help" id="step1-sub">One photo from one side, or four photos to stitch into a 360° map.</p>
+            </div>
+            <span class="chip">SAM 3.1</span>
+          </div>
+
+          <div class="seg" role="group" aria-label="Capture mode">
+            <button type="button" class="active" id="mode-single-btn" aria-pressed="true">One photo</button>
+            <button type="button" id="mode-stitch-btn" aria-pressed="false">Four sides, stitched</button>
+          </div>
+
+          <div id="single-upload-pane" class="block">
+            <label class="dropzone" id="photo-drop">
+              <input class="sr-only" type="file" id="photo-input" accept="image/*">
+              <img class="d-thumb hidden" id="photo-thumb" alt="Selected photo preview">
+              <span class="d-title" id="drop-title">Drop a photo here or click to browse</span>
+              <span class="d-hint" id="drop-hint">JPG, PNG or WebP of one building.</span>
+            </label>
+            <details class="adv">
+              <summary>Optional: attach an as-built UV survey mask (.png)</summary>
+              <input type="file" id="survey-input" accept="image/png,image/*" aria-label="UV survey mask">
+            </details>
+            <div id="preset-container" class="presets hidden"></div>
+          </div>
+
+          <div id="stitch-upload-pane" class="block hidden">
+            <label class="dropzone" id="batch-4-drop">
+              <input class="sr-only" type="file" id="batch-4-input" accept="image/*" multiple>
+              <span class="d-title">Drop all four photos at once</span>
+              <span class="d-hint">They fill the slots in order: north, east, south, west. Or fill each slot below.</span>
+            </label>
+            <div class="side-grid" id="side-grid">
+              <div class="side-slot" data-side="0">
+                <div class="side-head"><span>1 North</span><span>0–90°</span></div>
+                <label class="side-pick"><input class="sr-only" type="file" accept="image/*" data-side-input="0" aria-label="Side 1 north"><img class="side-thumb hidden" id="side-thumb-0" alt="Side 1 north preview"><span class="side-name" id="side-name-0">Add side 1</span></label>
+                <div class="side-swap"><span></span><button type="button" class="mini-btn" data-swap="0,1" aria-label="Swap side 1 and side 2">Swap →</button></div>
+              </div>
+              <div class="side-slot" data-side="1">
+                <div class="side-head"><span>2 East</span><span>90–180°</span></div>
+                <label class="side-pick"><input class="sr-only" type="file" accept="image/*" data-side-input="1" aria-label="Side 2 east"><img class="side-thumb hidden" id="side-thumb-1" alt="Side 2 east preview"><span class="side-name" id="side-name-1">Add side 2</span></label>
+                <div class="side-swap"><button type="button" class="mini-btn" data-swap="0,1" aria-label="Swap side 1 and side 2">← Swap</button><button type="button" class="mini-btn" data-swap="1,2" aria-label="Swap side 2 and side 3">Swap →</button></div>
+              </div>
+              <div class="side-slot" data-side="2">
+                <div class="side-head"><span>3 South</span><span>180–270°</span></div>
+                <label class="side-pick"><input class="sr-only" type="file" accept="image/*" data-side-input="2" aria-label="Side 3 south"><img class="side-thumb hidden" id="side-thumb-2" alt="Side 3 south preview"><span class="side-name" id="side-name-2">Add side 3</span></label>
+                <div class="side-swap"><button type="button" class="mini-btn" data-swap="1,2" aria-label="Swap side 2 and side 3">← Swap</button><button type="button" class="mini-btn" data-swap="2,3" aria-label="Swap side 3 and side 4">Swap →</button></div>
+              </div>
+              <div class="side-slot" data-side="3">
+                <div class="side-head"><span>4 West</span><span>270–360°</span></div>
+                <label class="side-pick"><input class="sr-only" type="file" accept="image/*" data-side-input="3" aria-label="Side 4 west"><img class="side-thumb hidden" id="side-thumb-3" alt="Side 4 west preview"><span class="side-name" id="side-name-3">Add side 4</span></label>
+                <div class="side-swap"><button type="button" class="mini-btn" data-swap="2,3" aria-label="Swap side 3 and side 4">← Swap</button><span></span></div>
+              </div>
+            </div>
+            <div id="stitch-preset-container" class="presets hidden"></div>
+          </div>
+
+          <button type="button" class="btn btn--primary btn--block js-lock" id="btn-analyze">Read the facade</button>
+        </div>
+
+        <div id="rig-results" class="block hidden" style="gap:var(--space-md)">
+          <div class="head">
+            <div>
+              <h2>Choose a fixture layout</h2>
+              <p class="help">Pick the rig that suits the facade. The preview on the left shows where each fixture sits.</p>
+            </div>
+            <span class="chip">SAM 3.1</span>
+          </div>
+          <div id="rig-list" class="option-list"></div>
+
+          <div class="block">
+            <h3>Detected elements</h3>
+            <p class="help" style="margin-top:0">Untick an element to keep it dark. Wrong or missing one? Open the Element map view and click the building to add one.</p>
+            <div id="zone-chips" class="zone-chips"></div>
+          </div>
+
+          <button type="button" class="btn btn--primary btn--block js-lock" id="btn-to-concepts">Suggest lighting concepts</button>
+        </div>
+      </section>
+
+      <!-- STEP 3: Show -->
+      <section id="panel-step-2" class="block hidden" style="gap:var(--space-md)">
+        <div class="head">
+          <div>
+            <h2 id="h-step-2">Pick a concept, then generate</h2>
+            <p class="help">Three directions written for this building's real elements and your rig. Edit the brief if you want your own.</p>
+          </div>
+          <span class="chip">Muse Spark</span>
+        </div>
+
+        <div id="concept-list" class="option-list"></div>
+
+        <div class="field">
+          <label for="brief-input">Show brief</label>
+          <textarea class="input" id="brief-input" placeholder="Example: UAE National Day. Flag colours climb the mullions from base to crown, then gold shimmers across the crown."></textarea>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="duration-select">Duration</label>
+            <select class="input" id="duration-select">
+              <option value="10">10 s, quick</option>
+              <option value="14" selected>14 s, standard</option>
+              <option value="20">20 s, full</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="texture-select">F3 light-art plate</label>
+            <select class="input" id="texture-select">
+              <option value="true" selected>Muse Image 1.0</option>
+              <option value="false">Procedural shader</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="wrap-select">How much of the 360° show the camera sees</label>
+          <select class="input" id="wrap-select">
+            <option value="auto" selected>Auto, from the silhouette</option>
+            <option value="0.25">1 side (90° slice)</option>
+            <option value="0.45">2 sides, corner view (162° slice)</option>
+            <option value="0.67">Wide wrap (240° slice)</option>
+            <option value="1.0">All 4 stitched sides (360°)</option>
+          </select>
+        </div>
+
+        <button type="button" class="btn btn--primary btn--block js-lock" id="btn-generate">Generate the show video</button>
+      </section>
+
+      <!-- STEP 4: Check -->
+      <section id="panel-step-3" class="block hidden" style="gap:var(--space-md)">
+        <div class="head">
+          <div>
+            <h2 id="h-step-3">Check readability and export</h2>
+            <p class="help">Light comes only from <strong id="summary-fx-count">0</strong> physical fixtures. Nothing washes over the glass between them.</p>
+          </div>
+          <span class="chip">F4 + F5</span>
+        </div>
+
+        <div id="tex-status" class="tex"></div>
+        <div id="audit-container"></div>
+
+        <div class="block">
+          <h3>Media-server files</h3>
+          <p class="help" style="margin-top:0">The unmasked canvas maps onto fixture addresses in Disguise or Resolume. The preview shows the result on the building.</p>
+          <div class="exports" id="export-links"></div>
+        </div>
+
+        <button type="button" class="btn btn--ghost btn--block js-lock" id="btn-back-concepts">Back to concepts</button>
+      </section>
+    </aside>
   </main>
 
+  <script src="/static/assets/facade.js"></script>
   <script>
+    FacadeScene.mount(document.getElementById('tower'), { labels: false, cx: 0.5 });
+
     const state = {
-      uploadMode: 'single', // 'single' | 'stitch'
+      uploadMode: 'single',
       sideFiles: [null, null, null, null],
       sideUrls: [null, null, null, null],
       sessionId: null,
@@ -944,43 +503,141 @@
       concepts: [],
       selectedConcept: null,
       generation: null,
+      requestedMuse: true,
+      beforeFix: null,
+      beforeFixStill: null,
       zoomed: false,
-      currentView: 'rig',
+      flow: 1,
+      reached: 1,
+      photoLabel: '',
     };
 
     const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-    function setBusy(busy, msg = 'Processing…') {
+    /* ---------- progress (real elapsed seconds, no fake percentages) ---------- */
+    const TASKS = {
+      analyze: { name: 'Reading the facade', model: 'SAM 3.1 + Muse Spark 1.3', slow: true,
+        what: 'SAM 3.1 outlines the facade elements, Muse Spark 1.3 names them, then fixture rigs are placed on the silhouette.' },
+      stitch: { name: 'Stitching four sides', model: 'SAM 3.1 + Muse Spark 1.3', slow: true,
+        what: 'Each side is read on its own, scaled to a common height, then joined into one 360° rig.' },
+      edit: { name: 'Updating elements', model: 'SAM 3.1',
+        what: 'Re-segmenting the element and rebuilding the fixture rigs.' },
+      concepts: { name: 'Designing concepts', model: 'Muse Spark 1.3',
+        what: 'Writing three lighting directions for this rig and rendering a preview of each.' },
+      generate: { name: 'Generating the show', model: 'Muse Spark 1.3', slow: true,
+        what: '' },
+      fix: { name: 'Applying the readability fix', model: 'Muse Spark 1.3', slow: true,
+        what: 'Adjusting the flagged moments, re-rendering on the discrete fixtures and checking again.' },
+    };
+    let timer = null;
+    function setBusy(busy, key) {
       const banner = $('status-banner');
-      $('status-text').textContent = msg;
-      banner.classList.toggle('visible', busy);
-      ['btn-analyze', 'btn-to-concepts', 'btn-generate'].forEach((id) => {
-        const el = $(id);
-        if (el) el.disabled = busy;
-      });
+      clearInterval(timer);
+      if (busy) {
+        const t = { ...TASKS[key] };
+        if (key === 'generate') {
+          t.model = state.requestedMuse ? 'Muse Spark 1.3 + Muse Image 1.0' : 'Muse Spark 1.3 + procedural shader';
+          t.what = `Muse Spark 1.3 plans the timeline, ${state.requestedMuse ? 'Muse Image 1.0 makes the F3 plate' : 'a procedural shader makes the F3 plate'}, then the 24 fps fixture video is rendered.`;
+        }
+        $('status-step').textContent = t.name;
+        $('status-model').textContent = t.model;
+        $('status-text').textContent = t.what;
+        $('status-range').textContent = t.slow ? 'can take 50 to 95 s' : 'elapsed';
+        const t0 = Date.now();
+        const tick = () => { $('status-elapsed').textContent = Math.floor((Date.now() - t0) / 1000) + ' s'; };
+        tick();
+        timer = setInterval(tick, 500);
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+      document.querySelectorAll('.js-lock, #btn-apply-fix').forEach((el) => { el.disabled = busy; });
     }
 
-    function showStep(stepNum) {
-      [1, 2, 3].forEach((n) => {
-        $(`panel-step-${n}`).classList.toggle('hidden', n !== stepNum);
-        $(`nav-step-${n}`).classList.toggle('active', n === stepNum);
-      });
+    /* ---------- errors: inline, specific, 401 -> /login ---------- */
+    function clearError() { $('error-box').classList.add('hidden'); }
+    function showError(title, err, fix) {
+      $('error-title').textContent = title;
+      $('error-detail').textContent = err && err.message ? err.message : String(err);
+      let hint = fix || '';
+      if (err && err.network) hint = 'Check your connection and try again.';
+      else if (err && err.status === 404) hint = 'The session was lost, possibly after a server restart. Go back to Photo and read the facade again.';
+      $('error-fix').textContent = hint;
+      $('error-box').classList.remove('hidden');
+      $('error-box').scrollIntoView({ block: 'nearest' });
+    }
+    $('error-dismiss').addEventListener('click', clearError);
+
+    async function api(url, opts) {
+      let res;
+      try { res = await fetch(url, opts); } catch (e) {
+        const er = new Error('The server could not be reached.'); er.network = true; throw er;
+      }
+      if (res.status === 401) { location.href = '/login'; throw new Error('Your session expired. Redirecting to sign in.'); }
+      if (!res.ok) {
+        let detail = '';
+        try {
+          const j = await res.json();
+          detail = Array.isArray(j.detail) ? j.detail.map((d) => d.msg || JSON.stringify(d)).join('; ') : (j.detail || '');
+        } catch (e) { /* non-JSON body */ }
+        const er = new Error(detail || `The server returned an error (HTTP ${res.status}).`);
+        er.status = res.status;
+        throw er;
+      }
+      return res.json();
     }
 
-    [1, 2, 3].forEach((n) => {
-      $(`nav-step-${n}`).addEventListener('click', () => {
-        if (!$(`nav-step-${n}`).disabled) showStep(n);
+    /* ---------- flow ---------- */
+    const FLOW_STATE = (n) => {
+      if (n === state.flow) return 'Current';
+      if (n === 4) return state.generation && state.generation.readability.passed ? 'Passed' : '';
+      return n < state.reached || (n < 4 && n < state.flow) ? 'Done' : '';
+    };
+    function goFlow(n) {
+      state.flow = n;
+      state.reached = Math.max(state.reached, n);
+      $('panel-step-1').classList.toggle('hidden', n > 2);
+      $('panel-step-2').classList.toggle('hidden', n !== 3);
+      $('panel-step-3').classList.toggle('hidden', n !== 4);
+      $('photo-block').classList.toggle('hidden', n !== 1);
+      $('photo-summary').classList.toggle('hidden', n !== 2);
+      $('rig-results').classList.toggle('hidden', n !== 2);
+      [1, 2, 3, 4].forEach((i) => {
+        const b = $(`nav-step-${i}`);
+        const li = b.closest('li');
+        b.disabled = i > state.reached || (i === 2 && !state.analysis) || (i === 3 && !state.concepts.length) || (i === 4 && !state.generation);
+        li.classList.toggle('current', i === n);
+        li.classList.toggle('done', i !== n && !!FLOW_STATE(i));
+        if (i === n) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+        li.querySelector('.state').textContent = FLOW_STATE(i);
       });
-    });
+      $('panel-step-1').closest('.panel').scrollTop = 0;
+    }
+    [1, 2, 3, 4].forEach((n) => $(`nav-step-${n}`).addEventListener('click', () => {
+      if ($(`nav-step-${n}`).disabled) return;
+      goFlow(n);
+      if (n === 2 && state.analysis) renderRigStep();
+      if (n === 3 && state.concepts.length) renderConceptsStep();
+      if (n === 4 && state.generation) renderShowStep();
+    }));
+    $('btn-change-photo').addEventListener('click', () => goFlow(1));
 
+    /* ---------- stage ---------- */
     $('btn-zoom').addEventListener('click', () => {
       state.zoomed = !state.zoomed;
       $('stage-img').classList.toggle('zoomed', state.zoomed);
-      $('btn-zoom').textContent = state.zoomed ? '🔎 Fit to Window' : '🔍 2× Inspect Fixtures';
+      $('btn-zoom').textContent = state.zoomed ? 'Fit to window' : 'Inspect at 2×';
+      updateHint();
     });
-    $('stage-img').addEventListener('click', () => {
-      if (state.zoomed) $('btn-zoom').click();
-    });
+    $('stage-img').addEventListener('click', () => { if (state.zoomed) $('btn-zoom').click(); });
+
+    function isZones() { return $('stage-img').src.includes('zones') && !$('stage-img').classList.contains('hidden'); }
+    function updateHint() {
+      const on = isZones() && !state.zoomed;
+      $('stage-hint').classList.toggle('hidden', !on);
+      $('stage-img').classList.toggle('pickable', on);
+    }
 
     function showImage(url, caption) {
       $('empty-state').classList.add('hidden');
@@ -993,6 +650,7 @@
       img.classList.remove('hidden');
       $('stage-caption').textContent = caption || '';
       $('btn-zoom').disabled = false;
+      updateHint();
     }
 
     function showVideo(url, caption) {
@@ -1005,6 +663,7 @@
       vid.play().catch(() => {});
       $('stage-caption').textContent = caption || '';
       $('btn-zoom').disabled = true;
+      updateHint();
     }
 
     function setStageTabs(tabs, activeKey, onSelect) {
@@ -1018,22 +677,23 @@
         b.addEventListener('click', () => {
           [...box.children].forEach((c) => c.classList.remove('active'));
           b.classList.add('active');
+          const ab = $('add-el-box'); if (ab) ab.remove();
           onSelect(t.key);
         });
         box.appendChild(b);
       });
     }
 
-    // Mode switcher: Single Photo vs Stitch All 4 Sides
+    /* ---------- upload modes ---------- */
     function setUploadMode(mode) {
       state.uploadMode = mode;
       $('mode-single-btn').classList.toggle('active', mode === 'single');
       $('mode-stitch-btn').classList.toggle('active', mode === 'stitch');
+      $('mode-single-btn').setAttribute('aria-pressed', mode === 'single');
+      $('mode-stitch-btn').setAttribute('aria-pressed', mode === 'stitch');
       $('single-upload-pane').classList.toggle('hidden', mode !== 'single');
       $('stitch-upload-pane').classList.toggle('hidden', mode !== 'stitch');
-      $('btn-analyze').textContent = mode === 'stitch'
-        ? 'Stitch All 4 Sides & Suggest Full 360° Fixture Locations'
-        : 'Detect Architecture & Suggest Fixture Locations';
+      $('btn-analyze').textContent = mode === 'stitch' ? 'Stitch four sides and read the facade' : 'Read the facade';
     }
     $('mode-single-btn').addEventListener('click', () => setUploadMode('single'));
     $('mode-stitch-btn').addEventListener('click', () => setUploadMode('stitch'));
@@ -1053,11 +713,10 @@
           slot.classList.remove('filled');
           thumb.removeAttribute('src');
           thumb.classList.add('hidden');
-          nameEl.textContent = `+ Upload Side ${i + 1}`;
+          nameEl.textContent = `Add side ${i + 1}`;
         }
       }
     }
-
     function assignSideFile(idx, file) {
       if (!file || idx < 0 || idx > 3) return;
       if (state.sideUrls[idx]) URL.revokeObjectURL(state.sideUrls[idx]);
@@ -1066,7 +725,6 @@
       refreshSideSlotsUI();
     }
 
-    // Batch 4-file uploader & drag-drop
     const batch4Input = $('batch-4-input');
     const batch4Drop = $('batch-4-drop');
     function assignBatchFiles(fileList) {
@@ -1074,27 +732,18 @@
       imgs.slice(0, 4).forEach((f, idx) => assignSideFile(idx, f));
     }
     batch4Input.addEventListener('change', () => assignBatchFiles(batch4Input.files));
-    ['dragenter', 'dragover'].forEach((ev) => batch4Drop.addEventListener(ev, (e) => {
-      e.preventDefault();
-      batch4Drop.classList.add('dragover');
-    }));
+    ['dragenter', 'dragover'].forEach((ev) => batch4Drop.addEventListener(ev, (e) => { e.preventDefault(); batch4Drop.classList.add('dragover'); }));
     ['dragleave', 'drop'].forEach((ev) => batch4Drop.addEventListener(ev, (e) => {
       e.preventDefault();
       batch4Drop.classList.remove('dragover');
       if (ev === 'drop' && e.dataTransfer.files.length) assignBatchFiles(e.dataTransfer.files);
     }));
 
-    // Individual side slots + swap buttons
     document.querySelectorAll('[data-side-input]').forEach((inp) => {
       const idx = Number(inp.dataset.sideInput);
-      inp.addEventListener('change', () => {
-        if (inp.files[0]) assignSideFile(idx, inp.files[0]);
-      });
+      inp.addEventListener('change', () => { if (inp.files[0]) assignSideFile(idx, inp.files[0]); });
       const slot = inp.closest('.side-slot');
-      ['dragenter', 'dragover'].forEach((ev) => slot.addEventListener(ev, (e) => {
-        e.preventDefault();
-        slot.classList.add('dragover');
-      }));
+      ['dragenter', 'dragover'].forEach((ev) => slot.addEventListener(ev, (e) => { e.preventDefault(); slot.classList.add('dragover'); }));
       ['dragleave', 'drop'].forEach((ev) => slot.addEventListener(ev, (e) => {
         e.preventDefault();
         slot.classList.remove('dragover');
@@ -1116,47 +765,48 @@
       });
     });
 
-    // Load local presets if available
+    // Sample presets
     fetch('/api/presets').then((r) => r.json()).then((data) => {
       if (data.presets && data.presets.length) {
         const box = $('preset-container');
         box.classList.remove('hidden');
+        const l = document.createElement('p'); l.className = 'label'; l.textContent = 'Or load a sample'; box.appendChild(l);
         data.presets.forEach((p) => {
           const b = document.createElement('button');
           b.type = 'button';
-          b.className = 'btn';
-          b.style.fontSize = '0.76rem';
-          b.textContent = '⚡ ' + p.label;
-          b.addEventListener('click', () => runAnalyze(p.id));
+          b.className = 'btn btn--ghost btn--block js-lock';
+          b.textContent = p.label;
+          b.addEventListener('click', () => runAnalyze(p.id, p.label));
           box.appendChild(b);
         });
       }
       if (data.has_stitch_demo) {
         const sbox = $('stitch-preset-container');
         sbox.classList.remove('hidden');
+        const l = document.createElement('p'); l.className = 'label'; l.textContent = 'Or load a sample'; sbox.appendChild(l);
         const sb = document.createElement('button');
         sb.type = 'button';
-        sb.className = 'btn';
-        sb.style.fontSize = '0.76rem';
-        sb.style.width = '100%';
-        sb.textContent = '⚡ Demo: Stitch 4 Sample Elevations (North · East · South · West)';
+        sb.className = 'btn btn--ghost btn--block js-lock';
+        sb.textContent = 'Sample: four elevations, stitched';
         sb.addEventListener('click', () => runStitchAnalyze('wasl_4sides_demo'));
         sbox.appendChild(sb);
       }
     }).catch(() => {});
 
-    // Drag & drop single photo input
+    // Single photo
     const photoInput = $('photo-input');
     const photoDrop = $('photo-drop');
-    photoInput.addEventListener('change', () => {
-      if (photoInput.files[0]) {
-        $('drop-title').textContent = 'Selected: ' + photoInput.files[0].name;
-      }
-    });
-    ['dragenter', 'dragover'].forEach((ev) => photoDrop.addEventListener(ev, (e) => {
-      e.preventDefault();
-      photoDrop.classList.add('dragover');
-    }));
+    function noteSelected(file) {
+      $('drop-title').textContent = file.name;
+      $('drop-hint').textContent = `${(file.size / 1048576).toFixed(1)} MB. Click to choose a different photo.`;
+      const th = $('photo-thumb');
+      th.onload = () => th.classList.remove('hidden');
+      th.onerror = () => th.classList.add('hidden');
+      th.src = URL.createObjectURL(file);
+      clearError();
+    }
+    photoInput.addEventListener('change', () => { if (photoInput.files[0]) noteSelected(photoInput.files[0]); });
+    ['dragenter', 'dragover'].forEach((ev) => photoDrop.addEventListener(ev, (e) => { e.preventDefault(); photoDrop.classList.add('dragover'); }));
     ['dragleave', 'drop'].forEach((ev) => photoDrop.addEventListener(ev, (e) => {
       e.preventDefault();
       photoDrop.classList.remove('dragover');
@@ -1167,7 +817,7 @@
           return;
         }
         photoInput.files = e.dataTransfer.files;
-        $('drop-title').textContent = 'Selected: ' + e.dataTransfer.files[0].name;
+        noteSelected(e.dataTransfer.files[0]);
       }
     }));
 
@@ -1176,91 +826,95 @@
       else runAnalyze(null);
     });
 
+    function adoptAnalysis(data, wrap, label) {
+      state.sessionId = data.session_id;
+      state.analysis = data;
+      state.concepts = [];
+      state.selectedConcept = null;
+      state.generation = null;
+      state.beforeFix = null;
+      state.reached = 1;
+      const rec = data.rig_options.find((o) => o.recommended) || data.rig_options[0];
+      state.selectedRigId = rec.id;
+      state.activeElementIds = data.elements.map((e) => e.id);
+      $('wrap-select').value = wrap;
+      state.photoLabel = label;
+      $('photo-summary-text').innerHTML = `<b>${esc(label)}</b><br>${data.photo_size[0]}×${data.photo_size[1]} px · ${data.elements.length} elements found`;
+      $('timeline-panel').classList.add('hidden');
+      renderRigStep();
+      goFlow(2);
+    }
+
     async function runStitchAnalyze(presetId) {
+      clearError();
       const fd = new FormData();
       if (presetId) {
         fd.append('preset', presetId);
       } else {
-        const missing = state.sideFiles.map((f, i) => (f ? null : `Side ${i + 1}`)).filter(Boolean);
+        const missing = state.sideFiles.map((f, i) => (f ? null : `side ${i + 1}`)).filter(Boolean);
         if (missing.length) {
-          alert(`Please upload all 4 building elevations to stitch the whole facade map (missing: ${missing.join(', ')}).`);
+          showError('Four photos are needed to stitch.', new Error(`Missing: ${missing.join(', ')}.`), 'Fill every slot, or switch to One photo.');
           return;
         }
         state.sideFiles.forEach((f, idx) => fd.append(`side_${idx + 1}`, f));
       }
-
-      setBusy(true, 'SAM 3.1 + Muse Spark segmenting all 4 elevations, aligning crown-to-base scale & stitching 360° facade rig… (~18–26s)');
+      setBusy(true, 'stitch');
       try {
-        const res = await fetch('/api/analyze-stitch', { method: 'POST', body: fd });
-        if (!res.ok) throw new Error((await res.json()).detail || '4-side stitching failed');
-        const data = await res.json();
-        state.sessionId = data.session_id;
-        state.analysis = data;
-        const rec = data.rig_options.find((o) => o.recommended) || data.rig_options[0];
-        state.selectedRigId = rec.id;
-        state.activeElementIds = data.elements.map((e) => e.id);
-        $('wrap-select').value = '1.0';
-        renderRigStep();
-        $('nav-step-1').classList.add('done');
+        const data = await api('/api/analyze-stitch', { method: 'POST', body: fd });
+        adoptAnalysis(data, '1.0', presetId ? 'Sample: four elevations' : 'Four sides stitched');
       } catch (err) {
-        alert('Error: ' + err.message);
+        showError('Could not stitch the four sides.', err, 'Check that each photo shows the building from a different side, in order, then try again.');
       } finally {
         setBusy(false);
       }
     }
 
-    async function runAnalyze(presetId) {
+    async function runAnalyze(presetId, presetLabel) {
+      clearError();
       const fd = new FormData();
+      let label;
       if (presetId) {
         fd.append('preset', presetId);
+        label = presetLabel || 'Sample photo';
       } else {
         if (!photoInput.files[0]) {
-          alert('Please choose a building photo first (or switch to Stitch All 4 Sides).');
+          showError('Choose a photo first.', new Error('No building photo is selected.'), 'Drop a JPG, PNG or WebP into the box, or load a sample.');
           return;
         }
         fd.append('photo', photoInput.files[0]);
-        if ($('survey-input').files[0]) {
-          fd.append('survey_mask', $('survey-input').files[0]);
-        }
+        label = photoInput.files[0].name;
+        if ($('survey-input').files[0]) fd.append('survey_mask', $('survey-input').files[0]);
       }
-
-      setBusy(true, 'SAM 3.1 + Muse Spark mapping facade architecture & tracking real mullions… (~12–18s)');
+      setBusy(true, 'analyze');
       try {
-        const res = await fetch('/api/analyze', { method: 'POST', body: fd });
-        if (!res.ok) throw new Error((await res.json()).detail || 'Analysis failed');
-        const data = await res.json();
-        state.sessionId = data.session_id;
-        state.analysis = data;
-        const rec = data.rig_options.find((o) => o.recommended) || data.rig_options[0];
-        state.selectedRigId = rec.id;
-        state.activeElementIds = data.elements.map((e) => e.id);
-        $('wrap-select').value = 'auto';
-        renderRigStep();
-        $('nav-step-1').classList.add('done');
+        const data = await api('/api/analyze', { method: 'POST', body: fd });
+        adoptAnalysis(data, 'auto', label);
       } catch (err) {
-        alert('Error: ' + err.message);
+        showError('Could not read this photo.', err, 'Use a JPG, PNG or WebP that shows the whole building, or try a sample.');
       } finally {
         setBusy(false);
       }
     }
 
+    /* ---------- click to add / remove elements ---------- */
     async function editElements(body) {
-      setBusy(true, 'Updating element map and fixture rigs…');
+      clearError();
+      setBusy(true, 'edit');
       try {
-        const res = await fetch(`/api/sessions/${state.sessionId}/elements`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-        if (!res.ok) throw new Error((await res.json()).detail || 'Edit failed');
-        Object.assign(state.analysis, await res.json());
+        Object.assign(state.analysis, await api(`/api/sessions/${state.sessionId}/elements`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }));
         state.activeElementIds = state.analysis.elements.map((e) => e.id);
         state.selectedRigId = (state.analysis.rig_options.find((o) => o.recommended) || state.analysis.rig_options[0]).id;
-        renderRigStep();
-        showImage(state.analysis.zones_url, 'Element map updated.');
-      } catch (err) { $('stage-caption').textContent = 'Error: ' + err.message; } finally { setBusy(false); }
+        renderRigStep('zones');
+        goFlow(2);
+        showImage(state.analysis.zones_url, body.action === 'add' ? 'Element added. The rigs were rebuilt.' : 'Element removed. The rigs were rebuilt.');
+      } catch (err) {
+        showError(body.action === 'add' ? 'Could not add that element.' : 'Could not remove that element.', err, 'Click a different spot on the building, or try again.');
+      } finally { setBusy(false); }
     }
-    // click the element-map overlay -> inline label box -> SAM point prompt
     $('stage-img').addEventListener('click', (ev) => {
       const a = state.analysis;
-      if (!a || !a.zones_url || !$('stage-img').src.includes('zones') || state.zoomed) return;
+      if (!a || !a.zones_url || !isZones() || state.zoomed) return;
       const r = ev.target.getBoundingClientRect();
       const x = Math.round((ev.clientX - r.left) / r.width * a.photo_size[0]);
       const y = Math.round((ev.clientY - r.top) / r.height * a.photo_size[1]);
@@ -1268,43 +922,40 @@
       if (!box) {
         box = document.createElement('form');
         box.id = 'add-el-box';
-        box.innerHTML = '<input name="l" placeholder="Label new element" required> <button>Add</button>';
-        $('stage-caption').after(box);
+        box.innerHTML = '<span>New element here</span><input name="l" placeholder="Name it, e.g. Crown" aria-label="Element name" required><button type="submit">Add element</button><button type="button" data-cancel>Cancel</button>';
+        box.querySelector('[data-cancel]').addEventListener('click', () => box.remove());
+        $('stage-hint').after(box);
       }
       box.onsubmit = (e) => { e.preventDefault(); const l = box.l.value; box.remove(); editElements({ action: 'add', x, y, label: l }); };
       box.l.focus();
     });
 
-    function renderRigStep() {
+    /* ---------- Layout ---------- */
+    function renderRigStep(startTab) {
       const data = state.analysis;
-      $('rig-results').classList.remove('hidden');
-      $('timeline-panel').classList.add('hidden');
-
       const rigList = $('rig-list');
       rigList.innerHTML = '';
       data.rig_options.forEach((opt) => {
         const card = document.createElement('button');
         card.type = 'button';
         card.className = 'opt-card' + (opt.id === state.selectedRigId ? ' selected' : '');
+        card.setAttribute('aria-pressed', opt.id === state.selectedRigId);
         card.innerHTML = `
-          <img class="opt-thumb" src="${opt.preview_url}" alt="${opt.name}">
+          <img class="opt-thumb" src="${esc(opt.preview_url)}" alt="">
           <div>
             <div class="opt-title-row">
-              <span class="opt-title">${opt.name}</span>
-              ${opt.recommended ? '<span class="badge new">Recommended</span>' : ''}
+              <span class="opt-title">${esc(opt.name)}</span>
+              ${opt.id === state.selectedRigId ? '<span class="chip chip--solid">Selected</span>' : ''}
+              ${opt.recommended ? '<span class="chip">Recommended</span>' : ''}
             </div>
-            <div class="opt-sub">${opt.subtitle}</div>
+            <div class="opt-sub">${esc(opt.subtitle)}</div>
             <div class="opt-meta">
-              <span>💡 ${opt.fixture_count.toLocaleString()} fixtures</span>
-              <span>⚡ ~${opt.est_power_kw} kW</span>
-              <span>📏 ${opt.pitch_desc}</span>
+              <span><b>${opt.fixture_count.toLocaleString()}</b> fixtures</span>
+              <span>~<b>${esc(opt.est_power_kw)}</b> kW</span>
+              <span>${esc(opt.pitch_desc)}</span>
             </div>
-          </div>
-        `;
-        card.addEventListener('click', () => {
-          state.selectedRigId = opt.id;
-          renderRigStep();
-        });
+          </div>`;
+        card.addEventListener('click', () => { state.selectedRigId = opt.id; renderRigStep(); });
         rigList.appendChild(card);
       });
 
@@ -1313,12 +964,12 @@
       const selRig = data.rig_options.find((o) => o.id === state.selectedRigId) || data.rig_options[0];
       data.elements.forEach((el) => {
         const cnt = (selRig.element_counts && selRig.element_counts[String(el.id)]) || 0;
-        const lbl = document.createElement('label');
-        lbl.className = 'zone-chip';
+        const wrap = document.createElement('div');
+        wrap.className = 'zone-chip';
         const checked = state.activeElementIds.includes(el.id) ? 'checked' : '';
-        lbl.innerHTML = `<input type="checkbox" value="${el.id}" ${checked}> #${el.id} ${el.label} (${cnt}) <button type="button" class="el-x" title="Remove element">x</button>`;
-        lbl.querySelector('.el-x').addEventListener('click', (ev) => { ev.preventDefault(); editElements({ action: 'remove', element_id: el.id }); });
-        lbl.querySelector('input').addEventListener('change', (ev) => {
+        wrap.innerHTML = `<label><input type="checkbox" value="${el.id}" ${checked}> #${el.id} ${esc(el.label)} <span class="cnt">${cnt}</span></label><button type="button" class="el-x" aria-label="Remove element ${el.id} ${esc(el.label)}" title="Remove element">×</button>`;
+        wrap.querySelector('.el-x').addEventListener('click', () => editElements({ action: 'remove', element_id: el.id }));
+        wrap.querySelector('input').addEventListener('change', (ev) => {
           const id = Number(ev.target.value);
           if (ev.target.checked) {
             if (!state.activeElementIds.includes(id)) state.activeElementIds.push(id);
@@ -1328,86 +979,81 @@
             ev.target.checked = true;
           }
         });
-        chips.appendChild(lbl);
+        chips.appendChild(wrap);
       });
 
       const isStitch = Boolean(data.is_stitched_360);
       const updateStage = (key) => {
         if (key === 'rig') {
-          showImage(selRig.preview_url, `${selRig.name} — ${selRig.fixture_count.toLocaleString()} discrete linear LED bars (${selRig.pitch_desc}). Click "2× Inspect Fixtures" to verify mullion alignment.`);
+          showImage(selRig.preview_url, `${selRig.name}: ${selRig.fixture_count.toLocaleString()} discrete linear LED bars (${selRig.pitch_desc}). Use Inspect at 2× to check alignment with the mullions.`);
         } else if (key === 'zones') {
           showImage(data.zones_url, isStitch
-            ? `SAM 3.1 + Muse Spark stitched & aligned ${data.elements.length} unified 360° architectural tiers across North · East · South · West.`
-            : `SAM 3.1 + Muse Spark mapped ${data.elements.length} architectural zones from one photo.`);
+            ? `SAM 3.1 + Muse Spark 1.3 found ${data.elements.length} tiers across north, east, south and west.`
+            : `SAM 3.1 + Muse Spark 1.3 found ${data.elements.length} elements in this photo.`);
         } else if (key === 'night') {
           showImage(data.night_url, isStitch
-            ? 'Harmonized 4-elevation twilight relighting — sky exposure & crown-to-base height matched seamlessly across all 4 stitched sides.'
-            : 'Automatic architectural twilight relighting preserves dark curtain-wall glass between mullions.');
+            ? 'Twilight base with sky exposure and crown-to-base height matched across all four sides.'
+            : 'Twilight relighting of your photo. The dark glass between mullions stays dark.');
         } else {
           showImage(data.original_url, isStitch
-            ? `Stitched 4-Sides Architectural Elevation Sheet (${data.photo_size[0]}×${data.photo_size[1]} px, North → East → South → West).`
-            : `Uploaded reference photograph (${data.photo_size[0]}×${data.photo_size[1]} px).`);
+            ? `Stitched sheet (${data.photo_size[0]}×${data.photo_size[1]} px), north to west.`
+            : `Your photo (${data.photo_size[0]}×${data.photo_size[1]} px).`);
         }
       };
-
-      setStageTabs([
-        { key: 'rig', label: isStitch ? 'Stitched 360° Fixture Rig' : 'Selected Fixture Rig' },
-        { key: 'zones', label: isStitch ? '4-Side SAM 3.1 Zones' : 'SAM 3.1 Element Map' },
-        { key: 'night', label: isStitch ? 'Stitched Twilight Base' : 'Night Relit Base' },
-        { key: 'orig', label: isStitch ? 'Stitched 4-Sides Sheet' : 'Original Photo' },
-      ], 'rig', updateStage);
-      updateStage('rig');
+      const tabs = [
+        { key: 'rig', label: 'Fixture rig' },
+        { key: 'zones', label: 'Element map' },
+        { key: 'night', label: 'Twilight base' },
+        { key: 'orig', label: isStitch ? 'Stitched sheet' : 'Original photo' },
+      ];
+      setStageTabs(tabs, startTab || 'rig', updateStage);
+      updateStage(startTab || 'rig');
     }
 
     $('btn-to-concepts').addEventListener('click', async () => {
-      setBusy(true, 'Muse Spark designing 3 tailored lighting concepts & rendering fixture mockups… (~6–10s)');
+      clearError();
+      setBusy(true, 'concepts');
       try {
-        const res = await fetch('/api/concepts', {
+        const data = await api('/api/concepts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            session_id: state.sessionId,
-            rig_id: state.selectedRigId,
-            active_element_ids: state.activeElementIds,
-          }),
+          body: JSON.stringify({ session_id: state.sessionId, rig_id: state.selectedRigId, active_element_ids: state.activeElementIds }),
         });
-        if (!res.ok) throw new Error((await res.json()).detail || 'Failed to suggest concepts');
-        const data = await res.json();
         state.concepts = data.concepts;
         state.selectedConcept = data.concepts[0];
-        $('nav-step-2').disabled = false;
-        $('nav-step-2').classList.add('done');
+        state.reached = Math.max(state.reached, 3);
+        $('brief-input').value = '';
+        goFlow(3);
         renderConceptsStep();
-        showStep(2);
       } catch (err) {
-        alert('Error: ' + err.message);
+        showError('Could not suggest concepts.', err, 'Try again. If it keeps failing, pick a different rig first.');
       } finally {
         setBusy(false);
       }
     });
 
+    /* ---------- Show ---------- */
     function renderConceptsStep() {
       const box = $('concept-list');
       box.innerHTML = '';
       state.concepts.forEach((c) => {
         const isSel = state.selectedConcept && state.selectedConcept.id === c.id;
-        const swatches = (c.palette || []).map((hex) => `<span class="swatch" style="background:${hex}" title="${hex}"></span>`).join('');
+        const swatches = (c.palette || []).map((hex) => `<span class="swatch" style="background:${esc(hex)}" title="${esc(hex)}"></span>`).join('');
         const card = document.createElement('button');
         card.type = 'button';
         card.className = 'opt-card' + (isSel ? ' selected' : '');
+        card.setAttribute('aria-pressed', Boolean(isSel));
         card.innerHTML = `
-          <img class="opt-thumb" src="${c.preview_url}" alt="${c.title}">
+          <img class="opt-thumb" src="${esc(c.preview_url)}" alt="">
           <div>
             <div class="opt-title-row">
-              <span class="opt-title">${c.title}</span>
-              <span class="badge">${c.mood}</span>
+              <span class="opt-title">${esc(c.title)}</span>
+              ${isSel ? '<span class="chip chip--solid">Selected</span>' : ''}
+              <span class="chip">${esc(c.mood)}</span>
             </div>
-            <div class="opt-sub">${c.tagline}</div>
-            <div class="opt-meta">
-              <span class="swatches">${swatches}</span>
-            </div>
-          </div>
-        `;
+            <div class="opt-sub">${esc(c.tagline)}</div>
+            <div class="opt-meta"><span class="swatches">${swatches}</span></div>
+          </div>`;
         card.addEventListener('click', () => {
           state.selectedConcept = c;
           $('brief-input').value = c.brief;
@@ -1421,32 +1067,36 @@
           $('brief-input').value = state.selectedConcept.brief;
         }
         const sc = state.selectedConcept;
+        const show = (key) => {
+          if (key === 'mockup') showImage(sc.preview_url, `${sc.title}: "${sc.tagline}". Fixture map only, with lens bloom, on a dark ground.`);
+          else if (key === 'camera') showImage(sc.camera_preview_url || sc.preview_url, `${sc.title}: projected onto the night photo of the building.`);
+          else if (key === 'zones') showImage(state.analysis.zones_url, 'SAM 3.1 element map.');
+          else showImage(state.analysis.original_url, 'Your photo.');
+        };
         setStageTabs([
-          { key: 'mockup', label: '✨ Fixture-Map Preview (Museum of Light)' },
-          { key: 'camera', label: '📷 On-Building Camera Mockup' },
-          { key: 'zones', label: 'SAM 3.1 Element Map' },
-          { key: 'orig', label: 'Original Photo' },
-        ], 'mockup', (key) => {
-          if (key === 'mockup') showImage(sc.preview_url, `${sc.title} — "${sc.tagline}" (pure discrete fixture map with two-pass optical lens bloom on #050512).`);
-          else if (key === 'camera') showImage(sc.camera_preview_url || sc.preview_url, `${sc.title} — projected onto the nocturnal building photograph.`);
-          else if (key === 'zones') showImage(state.analysis.zones_url, 'SAM 3.1 architectural element map.');
-          else showImage(state.analysis.original_url, 'Original uploaded building photo.');
-        });
-        showImage(sc.preview_url, `${sc.title} — "${sc.tagline}" (pure discrete fixture map with two-pass optical lens bloom on #050512).`);
+          { key: 'mockup', label: 'Fixture map' },
+          { key: 'camera', label: 'On the building' },
+          { key: 'zones', label: 'Element map' },
+          { key: 'orig', label: 'Original photo' },
+        ], 'mockup', show);
+        show('mockup');
       }
     }
 
     $('btn-generate').addEventListener('click', async () => {
+      clearError();
       const brief = $('brief-input').value.trim();
       if (!brief) {
-        alert('Please select a concept or enter a brief.');
+        showError('Add a brief first.', new Error('The show brief is empty.'), 'Select a concept above, or write one or two sentences about the show.');
+        $('brief-input').focus();
         return;
       }
       const sc = state.selectedConcept;
-      setBusy(true, 'Muse Spark planning timeline + Muse Image generating shader + rendering 24fps fixture video… (~15–25s)');
+      state.requestedMuse = $('texture-select').value === 'true';
+      setBusy(true, 'generate');
       try {
         const wrapVal = $('wrap-select').value;
-        const res = await fetch('/api/generate', {
+        state.generation = await api('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1458,152 +1108,169 @@
             visual_prompt: sc ? sc.visual_prompt : brief,
             duration_s: Number($('duration-select').value),
             active_element_ids: state.activeElementIds,
-            use_muse_image: $('texture-select').value === 'true',
+            use_muse_image: state.requestedMuse,
             wrap_fraction: wrapVal === 'auto' ? null : Number(wrapVal),
           }),
         });
-        if (!res.ok) throw new Error((await res.json()).detail || 'Generation failed');
-        state.generation = await res.json();
-        $('nav-step-3').disabled = false;
-        $('nav-step-3').classList.add('done');
+        state.beforeFix = null;
+        state.beforeFixStill = null;
+        state.reached = Math.max(state.reached, 4);
+        goFlow(4);
         renderShowStep();
-        showStep(3);
       } catch (err) {
-        alert('Error: ' + err.message);
+        showError('Could not generate the show.', err, 'Try again, or switch the F3 plate to Procedural shader.');
       } finally {
         setBusy(false);
       }
     });
 
+    /* ---------- Check ---------- */
+    function flagItems(flags) {
+      return (flags || []).map((f) => `
+        <li>
+          <div><span class="at">${esc(f.time_s)} s · ${esc(f.element_label)}</span></div>
+          <div>${esc(f.reason)}</div>
+          <div class="fixline">Fix: ${esc(f.suggested_fix)}</div>
+        </li>`).join('');
+    }
+
     function renderShowStep() {
       const g = state.generation;
       $('summary-fx-count').textContent = g.fixture_count.toLocaleString();
 
-      // Stage tabs
       const isStitch = Boolean(g.is_stitched_360);
       const degTxt = isStitch
-        ? 'all 4 stitched elevations · 360° full facade map'
-        : (g.wrap_degrees ? `${g.wrap_degrees}° visible slice of 360° show` : 'discrete linear fixtures');
+        ? 'all four stitched sides, 360° map'
+        : (g.wrap_degrees ? `${g.wrap_degrees}° visible slice of the 360° show` : 'discrete linear fixtures');
       const switchView = (key) => {
-        if (key === 'fxvideo' && g.fixture_video_url) showVideo(g.fixture_video_url, `${g.plan.title} — Pure Architectural Fixture-Map Preview (${g.fixture_count.toLocaleString()} discrete linear modules with optical lens bloom on #050512 @ ${g.fps} fps).`);
-        else if (key === 'video') showVideo(g.video_url, `${g.plan.title} — ${g.fixture_count.toLocaleString()} discrete fixtures on nocturnal camera view (${degTxt} @ ${g.fps} fps).`);
-        else if (key === 'fxstill' && g.fixture_still_url) showImage(g.fixture_still_url, 'Museum-of-Light Fixture-Map Still — click "2× Inspect Fixtures" to inspect discrete vertical linear modules & sculptural negative space.');
-        else if (key === 'still') showImage(g.still_url, 'On-Building Camera Hero Frame — click "2× Inspect Fixtures" to inspect individual mullions & dark glass bays.');
+        if (key === 'fxvideo' && g.fixture_video_url) showVideo(g.fixture_video_url, `${g.plan.title}: fixture-map preview, ${g.fixture_count.toLocaleString()} discrete modules with lens bloom, ${g.fps} fps.`);
+        else if (key === 'video') showVideo(g.video_url, `${g.plan.title}: ${g.fixture_count.toLocaleString()} fixtures on the night photo (${degTxt}, ${g.fps} fps).`);
+        else if (key === 'fxstill' && g.fixture_still_url) showImage(g.fixture_still_url, 'Fixture-map keyframe. Use Inspect at 2× to see individual modules and the dark gaps between them.');
+        else if (key === 'still') showImage(g.still_url, 'Camera keyframe. Use Inspect at 2× to check mullions and dark glass bays.');
+        else if (key === 'beforefix' && state.beforeFixStill) showImage(state.beforeFixStill, 'Keyframe before the readability fix.');
         else if (key === 'map360' && g.overview_360_url) showImage(g.overview_360_url, isStitch
-          ? 'Stitched 4-Elevation 360° Master Map aligned pixel-for-pixel across North · East · South · West.'
-          : 'Full 360° 4-Elevation Building Canvas showing all sides and the highlighted Camera Photo Viewport.');
+          ? 'Master map of the four stitched elevations, north, east, south, west.'
+          : 'The full 360° canvas with the camera viewport highlighted.');
         else if (key === 'canvas') showVideo(g.deliverable_url, isStitch
-          ? 'Unmasked Whole-Facade Media-Server Video registered directly to the Stitched 4-Side Fixture UV Mask (Disguise / Resolume ready).'
-          : 'Full 360° All-Sides Unmasked Media-Server Deliverable (all elevations seamlessly wrapped for Disguise / Resolume).');
+          ? 'Whole-facade media-server video registered to the stitched UV mask.'
+          : 'Unmasked 360° media-server video for Disguise or Resolume.');
         else if (key === 'uvmask') showImage(g.uv_mask_url, isStitch
-          ? 'Stitched 4-Side Fixture UV Pixel Map (.png) — exact pixel addresses for North · East · South · West.'
-          : '2D white-on-black Fixture UV Pixel Map exported for media-server mapping.');
-        else if (key === 'shader') showImage(g.texture_url, `F3 Seamless Light-Art Plate (${g.texture_source}) — palette-locked & sampled strictly on discrete fixtures.`);
+          ? 'Stitched fixture UV pixel map: exact pixel addresses for all four sides.'
+          : 'White-on-black fixture UV pixel map for media-server mapping.');
+        else if (key === 'shader') showImage(g.texture_url, `F3 light-art plate (${g.texture_source}), palette-locked and sampled only on the fixtures.`);
       };
       const defaultTab = g.fixture_video_url ? 'fxvideo' : 'video';
       setStageTabs([
-        ...(g.fixture_video_url ? [{ key: 'fxvideo', label: '▶ Fixture-Map Preview (Museum of Light)' }] : []),
-        { key: 'video', label: isStitch ? '▶ Stitched 4-Sides Camera Show' : '▶ On-Building Camera Video' },
-        ...(g.fixture_still_url ? [{ key: 'fxstill', label: 'Fixture-Map Keyframe' }] : []),
-        { key: 'still', label: 'Camera Keyframe' },
-        { key: 'map360', label: isStitch ? '360° 4-Side Master Map' : '360° 4-Side Viewport Map' },
-        { key: 'canvas', label: isStitch ? '▶ Whole-Facade Deliverable' : '▶ 360° All-Sides Deliverable' },
-        { key: 'uvmask', label: isStitch ? 'Stitched 4-Side UV Mask' : '2D Fixture UV Mask' },
-        { key: 'shader', label: `F3 Plate (${g.texture_source})` },
+        ...(g.fixture_video_url ? [{ key: 'fxvideo', label: 'Fixture-map video' }] : []),
+        { key: 'video', label: 'Camera video' },
+        ...(g.fixture_still_url ? [{ key: 'fxstill', label: 'Fixture keyframe' }] : []),
+        { key: 'still', label: 'Camera keyframe' },
+        ...(state.beforeFixStill ? [{ key: 'beforefix', label: 'Before fix' }] : []),
+        { key: 'map360', label: '360° map' },
+        { key: 'canvas', label: 'Media-server video' },
+        { key: 'uvmask', label: 'UV mask' },
+        { key: 'shader', label: 'F3 plate' },
       ], defaultTab, switchView);
       switchView(defaultTab);
 
       // Timeline
       $('timeline-panel').classList.remove('hidden');
-      $('plan-title').textContent = `${g.plan.title} (${g.plan.duration_s}s grounded show plan)`;
+      $('plan-title').textContent = `${g.plan.title} · ${g.plan.duration_s} s show plan`;
       $('tex-badge').textContent = `F3: ${g.texture_source}`;
       const rows = $('timeline-rows');
       rows.innerHTML = '';
       g.plan.steps.forEach((s) => {
-        const sw = (s.colors || []).slice(0, 4).map((c) => `<span class="swatch" style="background:${c}"></span>`).join('');
+        const sw = (s.colors || []).slice(0, 4).map((c) => `<span class="swatch" style="background:${esc(c)}"></span>`).join('');
         const div = document.createElement('div');
         div.className = 'step-row';
         div.innerHTML = `
-          <span style="color:var(--muted);font-variant-numeric:tabular-nums;">${s.start_s.toFixed(1)}–${s.end_s.toFixed(1)}s</span>
-          <span class="badge">${s.motion}${s.text ? ': ' + s.text : ''}</span>
-          <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <span class="swatches">${sw}</span>
-            <span>${s.description}</span>
-            <span style="color:var(--muted);font-size:0.72rem;">[zones: ${s.element_ids.map((i) => '#' + i).join(', ')}]</span>
-          </span>
-        `;
+          <span class="t">${s.start_s.toFixed(1)}–${s.end_s.toFixed(1)} s</span>
+          <span>${esc(s.motion)}${s.text ? ': ' + esc(s.text) : ''}</span>
+          <span>${esc(s.description)} <span class="swatches" style="vertical-align:middle;margin-left:6px">${sw}</span> <span class="z">zones ${s.element_ids.map((i) => '#' + i).join(', ')}</span></span>`;
         rows.appendChild(div);
       });
 
-      // Readability QA (F5)
-      const auditBox = $('audit-container');
-      const r = g.readability;
-      if (r.passed) {
-        auditBox.innerHTML = `
-          <div class="audit-box pass">
-            <strong>✓ F5 Readability Audit Passed (Muse Spark 1.3)</strong>
-            <div style="margin-top:4px;">${r.summary}</div>
-          </div>
-        `;
+      // F3 texture source, stated plainly
+      const usedMuse = String(g.texture_source).includes('muse-image');
+      const tex = $('tex-status');
+      tex.classList.toggle('fallback', !usedMuse && state.requestedMuse);
+      if (usedMuse) {
+        tex.innerHTML = `<span class="label">F3 light-art plate</span><span>Made by Muse Image 1.0 (<code>${esc(g.texture_source)}</code>).</span>`;
+      } else if (state.requestedMuse) {
+        tex.innerHTML = `<span class="label">F3 light-art plate <span class="chip chip--own">Fallback</span></span><span><b>Muse Image 1.0 did not return a plate.</b> A procedural shader (<code>${esc(g.texture_source)}</code>) was used instead, so the show looks different from a Muse Image render.</span>`;
       } else {
-        const flagHtml = (r.flags || []).map((f) => `
-          <li style="margin-top:6px;">
-            <strong>${f.time_s}s · ${f.element_label}:</strong> ${f.reason}
-            <br><span style="color:#fde68a;">Fix: ${f.suggested_fix}</span>
-          </li>
-        `).join('');
-        auditBox.innerHTML = `
-          <div class="audit-box fail">
-            <strong>⚠ F5 Readability Flag Caught Before Test Night</strong>
-            <div style="margin-top:4px;">${r.summary}</div>
-            <ul style="margin:6px 0 10px;padding-left:18px;">${flagHtml}</ul>
-            <button type="button" class="btn btn-amber" id="btn-apply-fix" style="width:100%;">
-              ✨ Apply Architectural Fix &amp; Re-Verify
-            </button>
-          </div>
-        `;
-        $('btn-apply-fix').addEventListener('click', runReadabilityFix);
+        tex.innerHTML = `<span class="label">F3 light-art plate</span><span>Procedural shader (<code>${esc(g.texture_source)}</code>), as you chose. Muse Image 1.0 was not called.</span>`;
       }
 
+      // Readability QA (F5): reason, fix, before/after
+      const auditBox = $('audit-container');
+      const r = g.readability;
+      const fixed = state.beforeFix;
+      let html;
+      if (r.passed) {
+        html = `<div class="check pass">
+          <div class="c-title"><span class="verdict">Passed</span> F5 readability check <span class="chip">Muse Spark 1.3</span></div>
+          <div>${esc(r.summary)}</div>
+          ${fixed ? `<div class="ba"><div><span class="label">Before</span><span class="verdict bad">${(fixed.flags || []).length} flag${(fixed.flags || []).length === 1 ? '' : 's'}</span></div><div><span class="label">After</span><span class="verdict ok">No flags</span></div></div>
+          <p class="label">Flagged before the fix</p><ul class="flags">${flagItems(fixed.flags)}</ul>` : ''}
+        </div>`;
+      } else {
+        html = `<div class="check fail">
+          <div class="c-title"><span class="verdict">${(r.flags || []).length} readability flag${(r.flags || []).length === 1 ? '' : 's'}</span> F5 check <span class="chip">Muse Spark 1.3</span></div>
+          <div>${esc(r.summary)}</div>
+          ${fixed ? `<div class="ba"><div><span class="label">Before</span><span class="verdict bad">${(fixed.flags || []).length} flag${(fixed.flags || []).length === 1 ? '' : 's'}</span></div><div><span class="label">After the fix</span><span class="verdict bad">${(r.flags || []).length} still flagged</span></div></div>` : ''}
+          <ul class="flags">${flagItems(r.flags)}</ul>
+          <button type="button" class="btn btn--primary btn--block js-lock" id="btn-apply-fix">${fixed ? 'Apply the fix again' : 'Apply the fixes and re-check'}</button>
+        </div>`;
+      }
+      auditBox.innerHTML = html;
+      const fixBtn = $('btn-apply-fix');
+      if (fixBtn) fixBtn.addEventListener('click', runReadabilityFix);
+
       // Downloads
-      $('export-links').innerHTML = `
-        ${g.fixture_video_url ? `<a class="btn" href="${g.fixture_video_url}" download="fixture_map_preview.mp4">⬇ Fixture-Map Preview (.mp4)</a>` : ''}
-        <a class="btn" href="${g.video_url}" download="${isStitch ? 'stitched_4sides_preview.mp4' : 'facade_camera_preview.mp4'}">⬇ ${isStitch ? 'Stitched 4-Sides Camera (.mp4)' : 'On-Building Camera (.mp4)'}</a>
-        <a class="btn" href="${g.deliverable_url}" download="${isStitch ? 'whole_facade_deliverable.mp4' : 'media_server_unmasked.mp4'}">⬇ ${isStitch ? 'Whole-Facade Deliverable (.mp4)' : 'Media-Server Canvas (.mp4)'}</a>
-        <a class="btn" href="${g.uv_mask_url}" download="${isStitch ? 'stitched_4sides_uv_mask.png' : 'fixture_uv_mask.png'}">⬇ ${isStitch ? 'Stitched 4-Side UV Mask (.png)' : 'Fixture UV Mask (.png)'}</a>
-      `;
+      const dl = (href, name, label, ext) => `<a class="btn btn--ghost" href="${esc(href)}" download="${name}"><span>${label}</span><span>${ext}</span></a>`;
+      $('export-links').innerHTML = [
+        g.fixture_video_url ? dl(g.fixture_video_url, 'fixture_map_preview.mp4', 'Fixture-map preview', '.mp4') : '',
+        dl(g.video_url, isStitch ? 'stitched_4sides_preview.mp4' : 'facade_camera_preview.mp4', isStitch ? 'Stitched camera video' : 'On-building camera video', '.mp4'),
+        dl(g.deliverable_url, isStitch ? 'whole_facade_deliverable.mp4' : 'media_server_unmasked.mp4', isStitch ? 'Whole-facade media-server video' : 'Media-server canvas', '.mp4'),
+        dl(g.uv_mask_url, isStitch ? 'stitched_4sides_uv_mask.png' : 'fixture_uv_mask.png', isStitch ? 'Stitched UV mask' : 'Fixture UV mask', '.png'),
+      ].join('');
+      goFlow(4);
     }
 
     async function runReadabilityFix() {
-      setBusy(true, 'Applying F5 readability fix & re-rendering discrete fixtures…');
+      clearError();
+      setBusy(true, 'fix');
       try {
-        const res = await fetch('/api/fix-readability', {
+        const fixed = await api('/api/fix-readability', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ session_id: state.sessionId }),
         });
-        if (!res.ok) throw new Error((await res.json()).detail || 'Fix failed');
-        const fixed = await res.json();
+        const old = state.generation;
+        state.beforeFix = old.readability;
+        state.beforeFixStill = old.fixture_still_url || old.still_url;
         state.generation = {
-          ...state.generation,
+          ...old,
           video_url: fixed.video_url,
-          fixture_video_url: fixed.fixture_video_url || state.generation.fixture_video_url,
+          fixture_video_url: fixed.fixture_video_url || old.fixture_video_url,
           still_url: fixed.still_url,
-          fixture_still_url: fixed.fixture_still_url || state.generation.fixture_still_url,
-          overview_360_url: fixed.overview_360_url || state.generation.overview_360_url,
+          fixture_still_url: fixed.fixture_still_url || old.fixture_still_url,
+          overview_360_url: fixed.overview_360_url || old.overview_360_url,
           deliverable_url: fixed.deliverable_url,
           plan: fixed.plan,
           readability: fixed.readability,
         };
         renderShowStep();
       } catch (err) {
-        alert('Error: ' + err.message);
+        showError('Could not apply the readability fix.', err, 'Your original show is unchanged. Try again.');
       } finally {
         setBusy(false);
       }
     }
 
-    $('btn-back-concepts').addEventListener('click', () => showStep(2));
+    $('btn-back-concepts').addEventListener('click', () => { goFlow(3); renderConceptsStep(); });
+    goFlow(1);
   </script>
 </body>
 </html>
