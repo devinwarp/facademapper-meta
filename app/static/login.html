@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in - Facade Mapper Intel</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23201d19'/%3E%3Crect x='3' y='3' width='2' height='10' fill='%23706a60'/%3E%3Crect x='7' y='3' width='2' height='10' fill='%23e8cf93'/%3E%3Crect x='11' y='3' width='2' height='10' fill='%23706a60'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=Schibsted+Grotesk:wght@400..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/theme.css">
+  <style>
+    body { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 7fr) minmax(480px, 5fr); }
+    .scene { position: relative; margin: 0; overflow: hidden; }
+    .scene canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .scene .wordmark { position: absolute; top: var(--space-lg); left: var(--space-2xl); z-index: 1; }
+    .scene figcaption { position: absolute; left: var(--space-2xl); bottom: var(--space-md); font-size: var(--text-xs); color: var(--text-tertiary); }
+    .panel {
+      background: var(--surface-raised); border-left: 1px solid var(--line-subtle);
+      display: grid; align-content: center; padding: var(--space-2xl);
+    }
+    .panel-inner { width: min(100%, 400px); display: grid; gap: var(--space-lg); }
+    .panel h1 { font-size: var(--text-xl); }
+    .panel .sub { color: var(--text-secondary); margin-top: var(--space-xs); }
+    form { display: grid; gap: var(--space-md); }
+    .error {
+      padding: var(--space-xs) var(--space-sm); border: 1px solid var(--danger); border-radius: var(--radius-control);
+      background: var(--danger-surface); color: var(--text-primary); font-size: var(--text-sm);
+    }
+    .error strong { color: var(--danger); font-weight: 600; }
+    .error[hidden] { display: none; }
+    form .btn { width: 100%; margin-top: var(--space-2xs); }
+    .back { color: var(--text-secondary); font-size: var(--text-sm); text-underline-offset: 4px; justify-self: start; }
+    .back:hover { color: var(--text-primary); }
+  </style>
+</head>
+<body>
+  <figure class="scene">
+    <a class="wordmark" href="/" aria-label="Facade Mapper Intel, overview">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect x="3" y="3" width="3" height="16" fill="oklch(0.5 0.012 72)"/><rect x="9.5" y="3" width="3" height="16" fill="oklch(0.84 0.10 82)"/><rect x="16" y="3" width="3" height="16" fill="oklch(0.5 0.012 72)"/></svg>
+      Facade Mapper Intel
+    </a>
+    <canvas id="tower" aria-hidden="true"></canvas>
+    <figcaption>Illustration drawn in code, not model output.</figcaption>
+  </figure>
+
+  <main class="panel">
+    <div class="panel-inner">
+      <div>
+        <h1>Sign in to the Studio</h1>
+        <p class="sub">Enter your username and password.</p>
+      </div>
+      <form method="post" action="/login" id="f">
+        <p class="error" id="err" role="alert" hidden><strong>Sign-in failed.</strong> Check your username and password, then try again.</p>
+        <div class="field">
+          <label for="username">Username</label>
+          <input class="input" id="username" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input class="input" id="password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn btn--primary" type="submit">Sign in</button>
+      </form>
+      <a class="back" href="/">Back to overview</a>
+    </div>
+  </main>
+
+  <script src="/static/assets/facade.js"></script>
+  <script>
+    FacadeScene.mount(document.getElementById('tower'), { labels: false, cx: 0.5 });
+    if (new URLSearchParams(location.search).get('error') === '1') {
+      document.getElementById('err').hidden = false;
+      ['username', 'password'].forEach(function (id) {
+        var el = document.getElementById(id);
+        el.setAttribute('aria-invalid', 'true');
+        el.setAttribute('aria-describedby', 'err');
+      });
+      document.getElementById('username').focus();
+    }
+  </script>
+</body>
+</html>
