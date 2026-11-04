@@ -1,3 +1,4 @@
+import os
 from fastapi.testclient import TestClient
 
 from app.checker import _short_text
@@ -49,3 +50,16 @@ def test_rate_limit(monkeypatch):
         c.post("/login", data={"username": "judge", "password": "x"})
     assert c.post("/login", data={"username": "judge", "password": "pw123"}).status_code == 429
     main._FAILS.clear()
+
+
+def test_dotenv_password_gates_before_any_model_call(tmp_path, monkeypatch):
+    """DEMO_PASSWORD in .env must gate from the first request, not only after the first model call."""
+    import subprocess, sys
+    (tmp_path / ".env").write_text("DEMO_PASSWORD=pw\n")
+    code = (
+        "import os;os.chdir(%r);os.environ.pop('DEMO_PASSWORD',None);"
+        "from fastapi.testclient import TestClient;from app.main import app;"
+        "print(TestClient(app).get('/studio',follow_redirects=False).status_code)" % str(tmp_path)
+    )
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env={**os.environ, "PYTHONPATH": os.getcwd()}).stdout.strip()
+    assert out == "303", out

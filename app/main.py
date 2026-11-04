@@ -28,7 +28,7 @@ from app.fixtures import (
     propose_fixture_rigs,
     render_rig_blueprint,
 )
-from app.mapper import Element, element_at_point, map_facade
+from app.mapper import Element, _load_dotenv, element_at_point, map_facade
 from app.motion import (
     Plan,
     Step,
@@ -50,6 +50,7 @@ app = FastAPI(title="facade-mapper-intel")
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+SAMPLES_DIR = STATIC_DIR / "samples"
 OUT_DIR = ROOT_DIR / "out" / "sessions"
 DATA_DIR = ROOT_DIR / "data"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -57,6 +58,7 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 # ---- demo sign-in (env-driven; disabled when DEMO_PASSWORD is unset) ----
+_load_dotenv()  # load .env now, so auth is on from the first request (it used to load at the first model call)
 _COOKIE, _TTL = "fm_session", 60 * 60 * 12
 _FAILS: dict[str, list[float]] = {}
 
@@ -394,6 +396,14 @@ def list_presets():
                 "has_survey": True,
                 "mode": "single",
             })
+    if (SAMPLES_DIR / "index_tower.jpg").exists():
+        presets.append({
+            "id": "index_tower",
+            "label": "Index Tower, Dubai: photo only",
+            "has_survey": False,
+            "mode": "single",
+            "credit": "Photo: Aidas U., CC BY 3.0 (Wikimedia Commons)",
+        })
     return {"presets": presets, "has_stitch_demo": has_stitch_demo}
 
 
@@ -409,6 +419,8 @@ async def api_analyze(
         img = Image.open(DATA_DIR / "wasl.png").convert("RGB")
         if preset == "wasl_with_survey" and (DATA_DIR / "wasl_uv_dyn.png").exists():
             surv = load_survey(str(DATA_DIR / "wasl_uv_dyn.png"), cache=str(DATA_DIR / "wasl_uv_dyn.png.npz"))
+    elif preset == "index_tower" and (SAMPLES_DIR / "index_tower.jpg").exists():
+        img = Image.open(SAMPLES_DIR / "index_tower.jpg").convert("RGB")
     elif photo is not None:
         img = await _read_image(photo)
         if survey_mask is not None:
