@@ -1,6 +1,6 @@
 """F3 & 360° Museum-of-Light Architectural Shader Engine (Meta Muse Image 1.0 + Sculptural Light Art).
 
-Embodies 3S Lighting's architectural media-facade craft (Wasl Tower / Burj Khalifa standard):
+Embodies 3S Lighting's architectural media-facade craft (landmark-tower standard):
 - "The tower is a sculpture first and a screen never; emerge, do not overlay."
 - Content lives on a continuous 360° wrap-around building canvas `(u_360 in [0, 1), v in [0, 1])`
   spanning all elevations seamlessly (`u=0` wraps with zero seam to `u=1`).
@@ -207,7 +207,7 @@ def evaluate_360_shader(
     ambient_underlay: bool = True,
     spine_u: float = 0.475,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Evaluate a 3S-Lighting 'Museum of Light' 360°-periodic architectural shader on `(u, v)`.
+    """Evaluate a 3S Lighting 'Museum of Light' 360°-periodic architectural shader on `(u, v)`.
 
     Supports HDR highlight headroom (`rgb` in `[0, 380]`) so focal stars, spine crests, petal blooms,
     and braided strands develop crisp white-core optical lens bloom while preserving negative space.

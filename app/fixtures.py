@@ -1225,14 +1225,14 @@ def propose_fixture_rigs(
         opt.view_cos = (0.62 + 0.38 * np.sin(np.pi * s)).astype(np.float32)
         opt.default_wrap = auto_wrap
 
-        # Structural spine azimuth (`spine_u`) = peak fixture density in central third (just like 3S Wasl viz.py SPINE_X!)
+        # Structural spine azimuth (`spine_u`) = peak fixture density in central third (same heuristic as the SPINE_X step in 3S Lighting's earlier viz.py, reimplemented here)
         hist, edges = np.histogram(opt.u_local, bins=36, range=(0.0, 1.0))
         smooth_h = ndi.gaussian_filter1d(hist.astype(np.float32), sigma=1.5)
         mid_lo, mid_hi = 10, 26
         best_bin = mid_lo + int(np.argmax(smooth_h[mid_lo:mid_hi]))
         opt.spine_u = float(0.5 * (edges[best_bin] + edges[best_bin + 1]))
 
-        # Tight architectural crop box (using smoothed mass > 5% of peak like 3S viz.py so sparse specks don't pad empty margins)
+        # Tight architectural crop box (using smoothed mass > 5% of peak as in 3S Lighting's earlier viz.py, so sparse specks don't pad empty margins)
         col_hist, col_edges = np.histogram(opt.xs, bins=max(16, W // 16), range=(0.0, float(W)))
         col_sm = ndi.gaussian_filter1d(col_hist.astype(np.float32), sigma=1.5)
         act_cols = np.where(col_sm > col_sm.max() * 0.05)[0]
@@ -1374,7 +1374,7 @@ def composite_pure_fixture_map(
     W: int,
     crop_box: tuple[int, int, int, int] | None = None,
 ) -> np.ndarray:
-    """Render the Museum-of-Light Pure Architectural Fixture-Map Preview (exact 3S submission aesthetic):
+    """Render the Museum-of-Light Pure Architectural Fixture-Map Preview (3S Lighting's preview aesthetic):
     discrete fixture mask emission -> density-calibrated two-pass optical lens bloom (tight + wide)
     -> 0.85 gamma lift on deep #050512 obsidian midnight, cropped cleanly around the active facade."""
     obsidian = np.array([0x05, 0x05, 0x12], dtype=np.float32) / 255.0

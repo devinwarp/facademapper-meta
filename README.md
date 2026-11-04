@@ -9,7 +9,7 @@ Reads a building's architecture from one photo and makes show content that fits 
 
 ## Built during the event
 
-Everything in this repository was written 26 Oct – 4 Nov 2026 for the Meta AI Developer Hackathon (Startup track). Commit history is the evidence; see [CHANGELOG.md](CHANGELOG.md).
+All code in this repository was written 26 Oct – 4 Nov 2026 for the Meta AI Developer Hackathon (Startup track), except for the earlier 3S Lighting work listed under [Existing baseline](#existing-baseline-not-submitted) and [Built with 3S Lighting](#built-with-3s-lighting). Commit history is the evidence; see [CHANGELOG.md](CHANGELOG.md).
 
 - **F1 Element map**: facade elements (fins, glass bands, setbacks, crown) as masks from one photo (`app/mapper.py`, `POST /map`)
 - **F2 Show plan**: timed plan whose steps reference real element ids, plus concept suggestions (`app/planner.py`, `POST /plan`)
@@ -27,6 +27,10 @@ A private Facade Mapper app existed before the event and is not part of this rep
 - video generation
 - export
 - the `facade_videogen` facet/homography contract (per-face canvas-rect to photo-quad mapping)
+
+## Built with 3S Lighting
+
+This project is built with 3S Lighting, whose "Museum of Light" design philosophy and landmark-tower standard guide the show-planning prompts and the look of the previews. Some comments and prompts in the code name 3S Lighting for that reason. Two heuristics in `app/fixtures.py` (the structural-spine azimuth and the tight crop box) follow the approach of an earlier 3S Lighting visualisation script, `viz.py`. They are reimplemented in this repository, and the script itself is not included. Treat that approach as part of the existing baseline, not as event work.
 
 ## How the two connect
 

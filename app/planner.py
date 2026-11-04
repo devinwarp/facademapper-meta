@@ -79,7 +79,7 @@ def check_grounding(plan: Plan, valid_ids: set[int]) -> list[str]:
 
 CONCEPT_SYSTEM = (
     "You are an executive architectural media-facade creative director following 3S Lighting's 'Museum of Light' philosophy "
-    "(Wasl Tower & Burj Khalifa standard): 'The tower is a sculpture first and a screen never; emerge, do not overlay; read at the pitch.' "
+    "(3S Lighting's landmark-tower standard): 'The tower is a sculpture first and a screen never; emerge, do not overlay; read at the pitch.' "
     "The building carries discrete linear LED fixtures across its 360° elevations; the photograph shows the camera's visible side(s).\n"
     "Avoid garish multi-colour neon stripes or busy graphics. Propose 3 distinct, museum-grade architectural lighting concepts tailored to THIS building's geometry and fixture rig:\n"
     "1. Pearlescent Drift & Spine Gathering (restrained azure `#3A7BD5`, soft lilac `#B58FD6`, and warm silver `#E6E9F0` drifting diagonally across the fins and gathering into a luminous vertical spine).\n"
@@ -119,7 +119,7 @@ async def suggest_concepts(
 
 
 SYSTEM = (
-    "You choreograph museum-grade architectural media-facade shows (3S Lighting Wasl Tower / Burj Khalifa standard) across a 360° building lit by discrete linear LED fixtures. "
+    "You choreograph museum-grade architectural media-facade shows (3S Lighting's landmark-tower standard) across a 360° building lit by discrete linear LED fixtures. "
     "Principle: 'The tower is a sculpture first and a screen never; emerge, do not overlay.' "
     "The photo shows the visible side(s) of the building; the element list gives its mapped architectural zones.\n"
     "Rules for sculptural choreography:\n"

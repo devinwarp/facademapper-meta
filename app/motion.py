@@ -1,6 +1,6 @@
 """F4: 360° Full-Building Choreography Projected onto Discrete Architectural Fixtures.
 
-Models real Burj Khalifa / Wasl Tower media-facade production:
+Models landmark-tower media-facade production (3S Lighting's standard):
 - Show content runs seamlessly across the ENTIRE 360° building perimeter (`u_360 in [0, 1)`) and
   full elevation height (`v in [0, 1]`), blending curl-advected `muse-image-1.0` silk plates with
   procedural 3D helical ribbons, rising comet streams, geometric diamond lattices, and champagne shimmer.
