@@ -610,23 +610,46 @@ def _survey_rig_option(
     if not tall_rects:
         return None
 
-    # Pick the single elevation whose aspect best matches the visible tower face so columns stay crisp & uncrushed
-    best_span = min(
+    u0, v0, u1, v1 = min(
         tall_rects,
         key=lambda r: abs(np.log(max((r[2] - r[0]) / max(r[3] - r[1], 1.0), 1e-3) / max(aspect, 1e-3))),
     )
-    u0, v0, u1, v1 = best_span
-    inside = (survey.cx >= u0) & (survey.cx <= u1) & (survey.cy >= v0) & (survey.cy <= v1)
-    u_norm = (survey.cx[inside] - u0) / max(u1 - u0, 1.0)
-    v_norm = (survey.cy[inside] - v0) / max(v1 - v0, 1.0)
-
-    py = np.clip(y_top + v_norm * tower_h, y_top, y_bot)
-    yi = np.clip(np.round(py).astype(int), y_top, y_bot)
-    margin = np.maximum(3.0, 0.03 * (row_r[yi] - row_l[yi]))
-    px = (row_l[yi] + margin) + u_norm * np.maximum(4.0, (row_r[yi] - row_l[yi]) - 2.0 * margin)
-
-    keep = tower_union[np.clip(np.round(py).astype(int), 0, H - 1), np.clip(np.round(px).astype(int), 0, W - 1)]
-    px, py = px[keep].astype(np.float32), py[keep].astype(np.float32)
+    if len(tall_rects) >= 2:
+        # A twisting tower shows two faces; one elevation squeezed across both leaves the second face and the
+        # podium bare. Map two adjacent elevations onto the faces (corner searched on a 1/4-scale silhouette).
+        from app.facets import fit_faces
+        from app.survey import map_elevation
+        pairs, _ = fit_faces(survey, [None, None], tower_union[::4, ::4], steps=7)
+        pxs, pys = [], []
+        for rect, quad in pairs:
+            qx, qy = map_elevation(survey, rect, quad * 4.0)
+            pxs.append(qx); pys.append(qy)
+        # podium / annex: the survey's short elevation(s) onto the building outside the tower
+        rest = ndi.binary_opening(building_mask & ~ndi.binary_dilation(tower_union, iterations=6), iterations=4)
+        lab_r, n_r = ndi.label(rest)
+        low = [r for r in elevations(survey, min_height=0.0) if r not in tall_rects]
+        if n_r and low:
+            comp = lab_r == (int(np.argmax(ndi.sum(rest, lab_r, range(1, n_r + 1)))) + 1)
+            ya, xa = np.where(comp)
+            if len(ya) > 400:
+                r = max(low, key=lambda r: (r[2] - r[0]) * (r[3] - r[1]))
+                quad = np.array([[xa.min(), ya.min()], [xa.max(), ya.min()], [xa.max(), ya.max()], [xa.min(), ya.max()]], float)
+                qx, qy = map_elevation(survey, r, quad)
+                pxs.append(qx); pys.append(qy)
+        px, py = np.concatenate(pxs), np.concatenate(pys)
+        keep = (building_mask | tower_union)[np.clip(np.round(py).astype(int), 0, H - 1), np.clip(np.round(px).astype(int), 0, W - 1)]
+        px, py = px[keep].astype(np.float32), py[keep].astype(np.float32)
+    else:
+        inside = (survey.cx >= u0) & (survey.cx <= u1) & (survey.cy >= v0) & (survey.cy <= v1)
+        u_norm = (survey.cx[inside] - u0) / max(u1 - u0, 1.0)
+        v_norm = (survey.cy[inside] - v0) / max(v1 - v0, 1.0)
+        py = np.clip(y_top + v_norm * tower_h, y_top, y_bot)
+        yi = np.clip(np.round(py).astype(int), y_top, y_bot)
+        margin = np.maximum(3.0, 0.03 * (row_r[yi] - row_l[yi]))
+        px = (row_l[yi] + margin) + u_norm * np.maximum(4.0, (row_r[yi] - row_l[yi]) - 2.0 * margin)
+    if len(tall_rects) < 2:
+        keep = tower_union[np.clip(np.round(py).astype(int), 0, H - 1), np.clip(np.round(px).astype(int), 0, W - 1)]
+        px, py = px[keep].astype(np.float32), py[keep].astype(np.float32)
 
     # Upright architectural linear bar per surveyed node
     angles = np.full(len(px), np.pi / 2, dtype=np.float32)
