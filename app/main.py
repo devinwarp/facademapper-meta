@@ -10,14 +10,15 @@ Exposes:
 """
 from __future__ import annotations
 
-import asyncio, base64, io, os, uuid
+import asyncio, base64, hashlib, hmac, io, os, time, uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 import numpy as np
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from PIL import Image, ImageDraw, ImageOps
 from pydantic import BaseModel
 
@@ -52,6 +53,46 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 OUT_DIR = ROOT_DIR / "out" / "sessions"
 DATA_DIR = ROOT_DIR / "data"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+# ---- demo sign-in (env-driven; disabled when DEMO_PASSWORD is unset) ----
+_COOKIE, _TTL = "fm_session", 60 * 60 * 12
+_FAILS: dict[str, list[float]] = {}
+
+
+def _demo_password() -> str | None:
+    return os.environ.get("DEMO_PASSWORD") or None
+
+
+def _sign(user: str, pw: str) -> str:
+    exp = str(int(time.time()) + _TTL)
+    msg = f"{user}|{exp}"
+    sig = hmac.new(hashlib.sha256(pw.encode()).digest(), msg.encode(), hashlib.sha256).hexdigest()
+    return f"{msg}|{sig}"
+
+
+def _signed_in(request: Request) -> bool:
+    pw = _demo_password()
+    if pw is None:
+        return True
+    try:
+        user, exp, sig = request.cookies.get(_COOKIE, "").split("|")
+        good = hmac.new(hashlib.sha256(pw.encode()).digest(), f"{user}|{exp}".encode(), hashlib.sha256).hexdigest()
+        return hmac.compare_digest(sig, good) and int(exp) > time.time()
+    except ValueError:
+        return False
+
+
+@app.middleware("http")
+async def auth_gate(request: Request, call_next):
+    path = request.url.path
+    gated = path.startswith(("/api/", "/assets/")) or path in ("/map", "/plan", "/studio")
+    if gated and not _signed_in(request):
+        if path == "/studio":
+            return RedirectResponse("/login", 303)
+        return JSONResponse({"detail": "Not authenticated"}, status_code=401)
+    return await call_next(request)
 
 
 @dataclass
@@ -267,12 +308,62 @@ def _quick_concept_stills(
     )
 
 
+def _page(name: str, title: str) -> HTMLResponse:
+    p = STATIC_DIR / name
+    if p.exists():
+        return HTMLResponse(p.read_text(encoding="utf-8"))
+    return HTMLResponse(f"<!doctype html><title>{title}</title><h1>{title}</h1>")  # placeholder until page exists
+
+
 @app.get("/", response_class=HTMLResponse)
-def index_page():
+def landing_page():
+    return _page("landing.html", "Facade Mapper")
+
+
+@app.get("/login", response_class=HTMLResponse)
+def login_page(request: Request):
+    if _signed_in(request):
+        return RedirectResponse("/studio", 303)
+    return _page("login.html", "Sign in")
+
+
+@app.get("/studio", response_class=HTMLResponse)
+def studio_page():
     html_path = STATIC_DIR / "index.html"
     if not html_path.exists():
         raise HTTPException(404, "Frontend UI missing")
     return HTMLResponse(html_path.read_text(encoding="utf-8"))
+
+
+@app.post("/login")
+def login(request: Request, username: str = Form(""), password: str = Form("")):
+    pw = _demo_password()
+    if pw is None:
+        return RedirectResponse("/studio", 303)
+    ip = request.client.host if request.client else "?"
+    now = time.time()
+    # ponytail: in-memory per-process, per-IP; resets on restart. Use a shared store if multi-worker.
+    fails = [t for t in _FAILS.get(ip, []) if now - t < 300]
+    _FAILS[ip] = fails
+    if len(fails) >= 10:
+        return JSONResponse({"detail": "Too many attempts"}, status_code=429)
+    users = [u.strip().lower() for u in os.environ.get("DEMO_USERS", "judge,designer").split(",") if u.strip()]
+    ok_user = username.strip().lower() in users
+    ok_pw = hmac.compare_digest(password.encode(), pw.encode())
+    if not (ok_user and ok_pw):
+        fails.append(now)
+        return RedirectResponse("/login?error=1", 303)
+    r = RedirectResponse("/studio", 303)
+    r.set_cookie(_COOKIE, _sign(username.strip().lower(), pw), httponly=True, samesite="lax",
+                 max_age=_TTL, secure=request.url.scheme == "https")
+    return r
+
+
+@app.post("/logout")
+def logout():
+    r = RedirectResponse("/", 303)
+    r.delete_cookie(_COOKIE)
+    return r
 
 
 @app.get("/assets/{session_id}/{filename}")

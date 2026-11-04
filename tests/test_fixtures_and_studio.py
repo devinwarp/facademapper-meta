@@ -145,7 +145,7 @@ def test_studio_routes_and_security():
     r_health = client.get("/health")
     assert r_health.status_code == 200 and r_health.json()["ok"] is True
 
-    r_ui = client.get("/")
+    r_ui = client.get("/studio")
     assert r_ui.status_code == 200
     assert "Facade Mapper" in r_ui.text
 
@@ -256,8 +256,8 @@ def test_four_side_stitch_alignment_and_360_quadrants():
 
     # Verify API validation rejects incomplete (<4 sides) stitch requests cleanly
     client = TestClient(app)
-    r_ui = client.get("/")
-    assert "Stitch All 4 Sides" in r_ui.text
+    r_ui = client.get("/studio")
+    assert "mode-stitch-btn" in r_ui.text
     r_incomplete = client.post("/api/analyze-stitch", files={"side_1": ("s1.jpg", b"123", "image/jpeg")})
     assert r_incomplete.status_code == 400
 

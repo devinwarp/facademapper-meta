@@ -138,6 +138,16 @@ async def check_readability(
     )
 
 
+def _short_text(text: str) -> str:
+    """Short readable token: first word + number ("UAE NATIONAL DAY 55" -> "UAE 55"), else first word (<=5 chars, else truncated)."""
+    words = text.strip().upper().split()
+    if not words:
+        return ""
+    first = words[0][:5]
+    num = next((w for w in words[1:] if any(c.isdigit() for c in w)), None)
+    return f"{first} {num}" if num else first
+
+
 def apply_readability_fix(els: list[Element], opt: FixtureRigOption, plan: Plan) -> tuple[Plan, list[str]]:
     """Deterministic architectural auto-fix so flagged unreadable text or empty zones resolve cleanly."""
     changes: list[str] = []
@@ -162,7 +172,7 @@ def apply_readability_fix(els: list[Element], opt: FixtureRigOption, plan: Plan)
         if st.motion == "text" and st.text:
             best_idx = opt.elem_membership.get(best_eid, np.empty(0, np.int32))
             cols, rows = _grid_resolution(opt, best_idx)
-            short_txt = st.text.strip()[:5].upper()
+            short_txt = _short_text(st.text)
             if opt.id not in {"architectural_accent", "horizontal_tiers"} and rows >= 10 and cols >= max(16, len(short_txt) * 4):
                 old_zone = ", ".join(by_id[i].label for i in st.element_ids if i in by_id)
                 st.element_ids = [best_eid]
