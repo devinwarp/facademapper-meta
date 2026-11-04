@@ -41,3 +41,6 @@ Event work only (26 Oct – 4 Nov 2026). One entry per feature, dated.
 - **F5 text fix:** the auto-fix keeps a readable token ("UAE NATIONAL DAY 55" -> "UAE 55", was "UAE N").
 - **Auth fix:** `.env` is loaded at startup so the sign-in gate is on from the first request.
 - **Samples:** bundled Index Tower sample (Aidas U., CC BY 3.0) in `app/static/samples/`; the synthetic four-sides demo is labelled as one photo reused.
+
+## Feedback logged (4 Nov)
+- User feedback recorded as roadmap, not implemented: adjustable mask size/width, movable and reshapable auto masks, selectable linear and pixel-dot fixtures. See README Roadmap.

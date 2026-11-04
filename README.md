@@ -47,6 +47,14 @@ This repo is a standalone service. The existing app calls it over HTTP (`POST /m
 
 See [METRICS.md](METRICS.md).
 
+## Roadmap (from user feedback)
+
+Requested by a lighting designer after seeing the demo; not built in the event window.
+
+- Adjustable mask size and width (grow/shrink and resize per element).
+- Auto-generated masks that can be moved and reshaped by hand, not only added or deleted.
+- Linear (strip) and pixel-dot fixture types, selectable per element, so the designer controls what the rig is made of.
+
 ## Run
 
 ```bash
