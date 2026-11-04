@@ -121,7 +121,7 @@ def _data_url(img: Image.Image) -> str:
 
 
 def _load_dotenv() -> None:
-    if "MODEL_API_KEY" not in os.environ and os.path.exists(".env"):
+    if os.path.exists(".env"):  # setdefault below never overrides real environment variables
         with open(".env") as f:
             for line in f:
                 line = line.strip()
@@ -191,17 +191,12 @@ async def outline_with_hero(img: Image.Image, els: list[Element], all_els: list[
         m = rec.mask
         raw = decode_mask_to_raster(m)
         if oid == 999:
-            tile_b = np.frombuffer(raw, np.uint8).reshape(m.height, m.width) > 0
-            t, l = int(rec.bounds.top), int(rec.bounds.left)
-            hero[t:t + m.height, l:l + m.width] |= tile_b
+            hero |= place_tile(np.frombuffer(raw, np.uint8).reshape(m.height, m.width) > 0, rec.bounds, h, w)
             continue
         el = by_id.get(oid)
         if el is None:
             continue
-        tile = Image.frombytes("L", (m.width, m.height), bytes(v * 255 for v in raw))
-        full = Image.new("L", (w, h), 0)
-        full.paste(tile, (int(rec.bounds.left), int(rec.bounds.top)))
-        el.mask = full
+        el.mask = Image.fromarray(place_tile(np.frombuffer(raw, np.uint8).reshape(m.height, m.width) > 0, rec.bounds, h, w).astype(np.uint8) * 255)
     return els, hero
 
 
@@ -213,6 +208,20 @@ async def element_at_point(img: Image.Image, x: int, y: int, label: str, eid: in
         raise ValueError("SAM found nothing at that point")
     el.box = bbox
     return el
+
+
+def place_tile(tile, bounds, h: int, w: int):
+    """SAM returns each mask tile downscaled (max side ~1024) but with bounds in full-image pixels: resize the tile to
+    the bounds before pasting, else big objects shrink toward the top-left of their true position."""
+    import numpy as np
+    t, l, b, r = int(bounds.top), int(bounds.left), int(bounds.bottom), int(bounds.right)
+    th, tw = tile.shape
+    if (r - l, b - t) != (tw, th) and r > l and b > t:
+        tile = np.asarray(Image.fromarray(tile.astype(np.uint8) * 255).resize((r - l, b - t), Image.NEAREST)) > 0
+    full = np.zeros((h, w), bool)
+    sub = tile[:max(0, min(b, h) - t), :max(0, min(r, w) - l)]
+    full[t:t + sub.shape[0], l:l + sub.shape[1]] = sub
+    return full
 
 
 async def concept_masks(img: Image.Image, text: str) -> list["np.ndarray"]:
@@ -232,10 +241,7 @@ async def concept_masks(img: Image.Image, text: str) -> list["np.ndarray"]:
             continue
         m = rec.mask
         tile = np.frombuffer(decode_mask_to_raster(m), np.uint8).reshape(m.height, m.width) > 0
-        full = np.zeros((img.height, img.width), bool)
-        t, l = int(rec.bounds.top), int(rec.bounds.left)
-        full[t:t + m.height, l:l + m.width] = tile
-        out.append(full)
+        out.append(place_tile(tile, rec.bounds, img.height, img.width))
     return out
 
 

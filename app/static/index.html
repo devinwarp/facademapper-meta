@@ -801,6 +801,7 @@
           b.textContent = p.label;
           b.addEventListener('click', () => runAnalyze(p.id, p.label));
           box.appendChild(b);
+          if (p.credit) { const c = document.createElement('p'); c.className = 'help'; c.textContent = p.credit; box.appendChild(c); }
         });
       }
       if (data.has_stitch_demo) {
@@ -810,7 +811,7 @@
         const sb = document.createElement('button');
         sb.type = 'button';
         sb.className = 'btn btn--ghost btn--block js-lock';
-        sb.textContent = 'Sample: four elevations, stitched';
+        sb.textContent = 'Demo: one photo reused for four sides';
         sb.addEventListener('click', () => runStitchAnalyze('wasl_4sides_demo'));
         sbox.appendChild(sb);
       }

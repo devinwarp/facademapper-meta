@@ -69,6 +69,9 @@ Set `DEMO_PASSWORD` (and optionally `DEMO_USERS`, default `judge,designer`) in `
 2. **Choose a fixture layout** — `muse-spark-1.3` proposes **3 tailored lighting concepts** grounded in the mapped zones and fixture count, with instant per-fixture concept mockups.
 3. **Generate 360° show & export media-server deliverables** — authors a seamless 360° wrap-around show across all building elevations (`muse-image-1.0` silk plates + helical vortex, comet stream, diamond lattice, and champagne shimmer shaders), renders discrete physical LED bars (zero glass wash), runs the `muse-spark-1.3` readability check + 1-click fix, and exports both the on-building video and the pixel-registered whole-facade media-server deliverable + UV mask.
 
+## Sample photos and credits
+`app/static/samples/index_tower.jpg` ("The Index Tower" by Aidas U., CC BY 3.0, https://commons.wikimedia.org/wiki/File:The_Index_Tower_-_panoramio.jpg, downscaled) is the bundled public sample, offered as preset `index_tower`. The Wasl presets only appear when the private `data/wasl.png` exists. The four-sides demo reuses one photo and is not real elevations.
+
 ## Deploy
 
 Run it locally (see Run above) or with the `Dockerfile` (Python 3.12 + ffmpeg, serves on `$PORT`, needs `MODEL_API_KEY`).
