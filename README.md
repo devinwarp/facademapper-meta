@@ -68,6 +68,8 @@ Endpoints (`app/main.py`): `GET /health`, `GET /`, `POST /map`, `POST /plan`, `G
 
 ## Deploy
 
-`Dockerfile` (Python 3.12 + ffmpeg, serves on `$PORT`) and `render.yaml` (Render web service, health check `/health`). Set `MODEL_API_KEY` in the Render dashboard.
+Run it locally (see Run above) or with the `Dockerfile` (Python 3.12 + ffmpeg, serves on `$PORT`, needs `MODEL_API_KEY`).
+
+Memory: measured peaks on a 500x650 photo are about 650 MB for `/api/analyze` and 1.8 GB for `/api/generate`, so a 512 MB host (Render Starter) is too small and 2 GB is tight. Meta's API also rejected requests from Render's Frankfurt region (404 "model not found") but accepted Virginia and local runs. For a shareable demo URL, run locally behind a tunnel, e.g. `cloudflared tunnel --url http://localhost:8000`.
 
 License: Apache-2.0
