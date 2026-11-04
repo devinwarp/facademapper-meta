@@ -59,6 +59,9 @@ uv run pytest
 
 Endpoints (`app/main.py`): `GET /health`, `GET /`, `POST /map`, `POST /plan`, `GET /api/presets`, `POST /api/analyze`, `POST /api/analyze-stitch`, `POST /api/concepts`, `POST /api/generate`, `POST /api/fix-readability`, `GET /assets/{session_id}/{filename}`.
 
+### Demo sign-in
+Set `DEMO_PASSWORD` (and optionally `DEMO_USERS`, default `judge,designer`) in `.env` to gate the Studio and API behind a login. With `DEMO_PASSWORD` unset, auth is off (local dev and tests). The landing page is at `/`, the Studio at `/studio`.
+
 ### Studio Workflow (`http://127.0.0.1:8000`)
 1. **Upload 1 viewpoint photo OR Stitch All 4 Sides (North · East · South · West)**:
    - **Single Photo (1–2 Sides)**: upload one photo (plus an optional 2D UV fixture survey mask); `muse-spark-1.3` + `sam-3.1` map the architectural elements and trace real mullions, helical fins, crown, setbacks, and floor slabs to suggest **3+ realistic fixture rig options**.

@@ -8,3 +8,4 @@ docs/plans/
 # client assets (photos, UV maps): never commit
 data/
 .claude/
+.playwright-mcp/
